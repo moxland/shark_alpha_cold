@@ -145,6 +145,7 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 	        const auto fname_transients = get_transients_filename(batch);
 		hdf5::Reader batch_transients(fname_transients);
 		transientsIndex = batch_transients.read_dataset_v<Subhalo::id_t>("nodeIndex");
+		//		transientsHostIndex = batch_transients.read_dataset_v<Subhalo::id_t>("hostIndex");
 	}
 	  
 	auto n_subhalos = Mvir.size();
@@ -307,6 +308,10 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch)
 		}
 		subhalo->host_halo = halo;
 		halo->add_subhalo(std::move(subhalo));
+//		if (!transients_prefix.empty()){
+//			// create flag to indicate this halo is transient
+//		        halo->transient = std::find(std::begin(transientsHostIndex), std::end(transientsHostIndex), hostIndex[i]) != std::end(transientsHostIndex);
+//		}
 	}
 	subhalos.clear();
 
@@ -315,14 +320,14 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch)
 	os << "This should take another ~" << memory_amount(halos.size() * (sizeof(Halo) + sizeof(HaloPtr))) << " of memory";
 	LOG(info) << os.str();
 
-	// Calculate halos' vvir and concentration
-	t = Timer();
-	omp_dynamic_for(halos, threads, 10000, [&](const HaloPtr &halo, unsigned int thread_idx) {
-		auto z = simulation_params.redshifts[halo->snapshot];
-		halo->Vvir = dark_matter_halos->halo_virial_velocity(halo->Mvir, z);
-		halo->concentration = dark_matter_halos->nfw_concentration(halo->Mvir,z);
-	});
-	LOG(info) << "Calculated Vvir and concentration for new Halos in " << t;
+//	// Calculate halos' vvir and concentration
+//	t = Timer();
+//	omp_dynamic_for(halos, threads, 10000, [&](const HaloPtr &halo, unsigned int thread_idx) {
+//		auto z = simulation_params.redshifts[halo->snapshot];
+//		halo->Vvir = dark_matter_halos->halo_virial_velocity(halo->Mvir, z);
+//		halo->concentration = dark_matter_halos->nfw_concentration(halo->Mvir,z);
+//	});
+//	LOG(info) << "Calculated Vvir and concentration for new Halos in " << t;
 
 	return halos;
 }

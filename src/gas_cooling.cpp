@@ -392,6 +392,7 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 	if(subhalo.subhalo_type == Subhalo::SATELLITE && subhalo.Vvir_infall != 0 &&
 	               dark_matter_params.apply_fix_to_mass_swapping_events){
 		vvir = subhalo.Vvir_infall;
+		fhot = mhot / subhalo.Mvir_infall;
 	}
 
 	double zhot = 0;
