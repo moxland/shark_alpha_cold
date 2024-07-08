@@ -20,7 +20,7 @@ jobs:
         omp: [true, false]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
 
@@ -71,7 +71,7 @@ jobs:
     needs: build_and_test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: ./.github/actions/download-shark-build
 
@@ -103,7 +103,7 @@ jobs:
     needs: initial_shark_run
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install HDF5 tools
         run: sudo apt install hdf5-tools
@@ -127,7 +127,7 @@ jobs:
     # with some plots
     if: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: actions/download-artifact@v3
         with:
@@ -154,7 +154,7 @@ jobs:
     needs: initial_shark_run
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: ./.github/actions/download-shark-build
 
