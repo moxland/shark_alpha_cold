@@ -40,7 +40,18 @@ Lsun = 3.839e-7 #in 1e40 erg/s
 sigma_gas = 20.0 #km/s for CO
 
 thresh_thin_disk = 0.01
-thresh_super_edd = 1.0
+thresh_super_edd = 4.0
+
+
+delta_adaf = 0.2
+mdotcrit_adaf = 0.01
+
+alpha_adaf = 0.1
+beta = 1 - alpha_adaf / 0.55
+low_accretion_adaf = 0.001 * (delta_adaf / 0.0005) * (1 - beta) / beta * np.power(alpha_adaf, 2.0)
+constant_lowlum_adaf = (delta_adaf / 0.0005) * (1 - beta) / 0.5 * 6
+constant_highlum_adaf = beta / 0.5 / np.power(alpha_adaf, 2) * 6
+
 
 gammaSFR = 1.0
 alphaFx  = 1.0 
@@ -48,7 +59,70 @@ Av = 4
 
 zsun = 0.0189
 
-def prepare_data(hdf5_data, index, model_dir, snapshot, subvol, obsdir):
+def plot_co_sled(plt, LCO, snap, outdir):
+
+    xj = np.array([1,2,3,4,5,6,7,8,9,10])
+    colors = ['Orange', 'SeaGreen', 'Purple']
+    #plot evolution of SMGs in the UVJ plane
+    xtit="$\\rm J_{\\rm upper}$"
+    ytit="$\\rm S_{\\rm CO}/S_{\\rm CO(1-0)}$"
+
+    xmin, xmax, ymin, ymax = 0.5, 10, 0, 20
+    xleg = xmax - 0.18 * (xmax-xmin)
+    yleg = ymin + 0.1 * (ymax-ymin)
+
+    fig = plt.figure(figsize=(5,4))
+    ax = fig.add_subplot(111)
+    common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(1, 1, 1, 1))
+
+    med_co = np.zeros(shape = (3,10))
+    med_co[0,0] = 1
+    med_co[1,0] = 1
+    med_co[2,0] = 1
+
+    for i in range(1,10):
+        ind=np.where(LCO[:,0] > 0)
+        med_co[0,i] = np.median(LCO[ind,i]/LCO[ind,0])
+        per = np.percentile(LCO[ind,i]/LCO[ind,0], [16, 50, 84])
+        med_co[0,i] = per[1]
+        med_co[1,i] = per[0]
+        med_co[2,i] = per[2]
+
+    ax.fill_between(xj, med_co[1,:], med_co[2,:], color='orange')
+    ax.plot(xj, med_co[0,:], linestyle='solid', color='darkred')
+
+    namefig = "example_co_sleds_massive_sf_" + snap + ".pdf"
+    common.savefig(outdir, fig, namefig)
+
+
+def radiation_efficiency(spin, efficiency):
+
+    eff = efficiency
+    a = abs(spin);
+    a2 = a**2
+
+    z1 = 1 + np.power(1 - a2, 0.333) * (np.power(1 + a, 0.333) + np.power(1 - a, 0.333))
+    z2 = np.sqrt(3 * a2 + np.power(z1, 2))
+
+    r_lso = np.zeros(shape = len(spin))
+
+    ind = np.where(spin >= 0)
+    r_lso[ind] = 3 + z2[ind]  - np.sqrt((3 - z1[ind] ) * (3 + z1[ind]  + 2 * z2[ind] ))
+    ind = np.where(spin < 0)
+    r_lso[ind]  = 3 + z2[ind]  + np.sqrt((3 - z1[ind] ) * (3 + z1[ind]  + 2 * z2[ind] ))
+
+    eff[0,:] = 1 - np.sqrt(1 - 2 / (3 * r_lso))
+
+    ind = np.where(eff[0,:] < 0)
+    eff[0,ind] = 0.07
+    ind = np.where(eff[0,:] > 0.5)
+    eff[0,ind] = 0.5
+    eff[1,:] = r_lso
+
+    efficiency = eff
+
+
+def prepare_data(hdf5_data, index, model_dir, snapshot, subvol, obsdir, read_spin, test_co_sleds):
 
     #read ascii table from Bayet et al. (2011)
     datanu = np.genfromtxt(os.path.join(obsdir, 'Models', 'CO','emlines_carbonmonoxide_restnu.data'), delimiter=' ', skip_header=11)
@@ -83,8 +157,19 @@ def prepare_data(hdf5_data, index, model_dir, snapshot, subvol, obsdir):
     MaxCRs = np.max(CRs) #define maximum CRs probed by the models.
 
     # read galaxy information in lightcone
-    (h0, _, idgal, mmol_b, mmol_d, rd, rb, mzd, mzb, sfr_d, sfr_b, mgd, mgb, 
-    mbh, mbh_acc_hh, mbh_acc_sb, mdisk, mbulge) = hdf5_data
+    if(read_spin):
+        (h0, _, idgal, mmol_b, mmol_d, rd, rb, mzd, mzb, sfr_d, sfr_b, mgd, mgb, 
+       mbh, mbh_acc_hh, mbh_acc_sb, mdisk, mbulge, spin) = hdf5_data
+    else:
+        (h0, _, idgal, mmol_b, mmol_d, rd, rb, mzd, mzb, sfr_d, sfr_b, mgd, mgb,
+       mbh, mbh_acc_hh, mbh_acc_sb, mdisk, mbulge) = hdf5_data
+
+    efficiency = np.zeros(shape=(2,len(mbh)))
+    if(read_spin):
+        radiation_efficiency(spin, efficiency)
+    else:
+        efficiency[0,:] = 0.1
+        efficiency[1,:] = 6
 
     #define metallicities for disk and bulge
     zd = np.zeros(shape = len(mzd))
@@ -109,7 +194,7 @@ def prepare_data(hdf5_data, index, model_dir, snapshot, subvol, obsdir):
 
     # define bolometric luminosities using Eqs 1 in Amarantidis et al. (2019)
     ind = np.where(mbh_acc_hh+mbh_acc_sb > 0) 
-    Lthin_disk[ind] = 0.1*pow(c_light*1e2, 2.0) *(mbh_acc_hh[ind]+mbh_acc_sb[ind])/h0 * 6.329113924050633e-24 #in 1e40 ergs/s
+    Lthin_disk[ind] = efficiency[0,ind] * pow(c_light*1e2, 2.0) *(mbh_acc_hh[ind]+mbh_acc_sb[ind])/h0 * 6.329113924050633e-24 #in 1e40 ergs/s
 
     # thin disks
     ind = np.where((mnorm > thresh_thin_disk) & (mnorm < thresh_super_edd))
@@ -117,10 +202,12 @@ def prepare_data(hdf5_data, index, model_dir, snapshot, subvol, obsdir):
     # super-eddington
     ind = np.where(mnorm > thresh_super_edd)
     Lbol[ind] = thresh_super_edd *  (1.0 + np.log(mnorm[ind]/thresh_super_edd)) * Ledd[ind] #in 1e40 ergs/s
-    # ADAfs adopting alpa_ADAF=0.1 and beta = 0.81 and r_lso = 6 (spin =1)
-    ind = np.where((mnorm < thresh_thin_disk) & (mnorm > 0))
-    Lbol[ind] = 0.2 * Lthin_disk[ind] * (mnorm[ind]/1e-2) * 1.63 
- 
+    # ADAfs
+    ind = np.where((mnorm < thresh_thin_disk) & (mnorm > 0) & (mnorm > low_accretion_adaf))
+    Lbol[ind] = 0.2 * efficiency[0,ind]  * pow(c_light*1e2, 2.0) *(mbh_acc_hh[ind]+mbh_acc_sb[ind])/h0 * 6.329113924050633e-24 * mnorm[ind] * constant_highlum_adaf / efficiency[1,ind]
+    ind = np.where((mnorm < thresh_thin_disk) & (mnorm > 0) & (mnorm < low_accretion_adaf))
+    Lbol[ind] = 0.0002 * efficiency[0,ind]  * pow(c_light*1e2, 2.0) *(mbh_acc_hh[ind]+mbh_acc_sb[ind])/h0 * 6.329113924050633e-24 * constant_lowlum_adaf / efficiency[1,ind] 
+
     # L-hard-xrays Eq 34 from Griffin et al. (2018)
     Lrat = np.log10(Lbol/Lsun)  
     Lx = pow(10.0, -1.54 - 0.24*Lrat - 0.012 * pow(Lrat, 2.0) + 0.0015 * pow(Lrat, 3.0)) * Lbol #in 1e40 erg/s
@@ -212,21 +299,47 @@ def prepare_data(hdf5_data, index, model_dir, snapshot, subvol, obsdir):
     hf.create_dataset('frequency_co_rest', data=nuco)
     hf.close()
 
+    if(test_co_sleds):
+       ssfr_cut = 10**(-1 + 0.5 * redshift)
+       ind = np.where( ((mdisk +  mbulge)/h0 > 1e10) & ((sfr_d + sfr_b)/(mdisk +  mbulge) > ssfr_cut))
+       return LCOd[ind] + LCOb[ind]
+
 def main(model_dir, output_dir, redshift_table, subvols, obs_dir):
 
-    snapshots = range(30,200)
+    plt = common.load_matplotlib()
+    test_co_sleds = False
+    read_spin = True
+
+    if(test_co_sleds):
+        zlist = [0, 0.5, 1, 1.5, 2, 2.5, 3.0]
+        snapshots = redshift_table[zlist]
+    else:
+        snapshots = range(61,200)
+
     # Loop over redshift and subvolumes
     plt = common.load_matplotlib()
 
-    fields = {'galaxies': ('id_galaxy', 'mmol_bulge', 'mmol_disk', 'rgas_disk',
-                           'rgas_bulge', 'mgas_metals_disk', 'mgas_metals_bulge', 'sfr_disk', 'sfr_burst',
-                           'mgas_disk', 'mgas_bulge','m_bh','bh_accretion_rate_hh','bh_accretion_rate_sb',
-                           'mstars_disk', 'mstars_bulge')}
+
+ 
+    if(read_spin):
+       fields = {'galaxies': ('id_galaxy', 'mmol_bulge', 'mmol_disk', 'rgas_disk',
+                              'rgas_bulge', 'mgas_metals_disk', 'mgas_metals_bulge', 'sfr_disk', 'sfr_burst',
+                              'mgas_disk', 'mgas_bulge','m_bh','bh_accretion_rate_hh','bh_accretion_rate_sb',
+                              'mstars_disk', 'mstars_bulge', 'bh_spin')}
+    else:
+       fields = {'galaxies': ('id_galaxy', 'mmol_bulge', 'mmol_disk', 'rgas_disk',
+                              'rgas_bulge', 'mgas_metals_disk', 'mgas_metals_bulge', 'sfr_disk', 'sfr_burst',
+                              'mgas_disk', 'mgas_bulge','m_bh','bh_accretion_rate_hh','bh_accretion_rate_sb',
+                              'mstars_disk', 'mstars_bulge')}
 
     for index,snapshot in enumerate(snapshots): 
        for subv in subvols:
            hdf5_data = common.read_data(model_dir, snapshot, fields, [subv])
-           prepare_data(hdf5_data, index, model_dir, snapshot, subv, obs_dir)
+           if(test_co_sleds):
+              LCO = prepare_data(hdf5_data, index, model_dir, snapshot, subv, obs_dir, read_spin, test_co_sleds)
+              plot_co_sled(plt, LCO, str(zlist[index]), output_dir)
+           else:
+              prepare_data(hdf5_data, index, model_dir, snapshot, subv, obs_dir, read_spin, test_co_sleds)
 
 if __name__ == '__main__':
     main(*common.parse_args())
