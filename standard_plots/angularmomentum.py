@@ -184,7 +184,7 @@ def molecular_surface_density(r, mgas, rgas, mstar, rstar):
         # Check for low surface densities.
         sigma_HI_crit = 0.5 * 1e12 #in Msun/Mpc^2
         if(Sigma_gas <= sigma_HI_crit):
-                return 0
+                return 0,0
 
         Sigma_stars = 0
         # Define Sigma_stars only if stellar mass and radius are positive.
@@ -192,8 +192,12 @@ def molecular_surface_density(r, mgas, rgas, mstar, rstar):
                 rse = rstar / 1.67
                 sigma_star0 = mstar / (2 * np.pi * rse**2)
                 Sigma_stars = sigma_star0 * np.exp(-r / rse)
-             
-        return 2 * np.pi * fmol(Sigma_gas, Sigma_stars, r) * Sigma_gas * r #Add the 2PI*r to Sigma_gas to make integration.
+
+        fmol_in = fmol(Sigma_gas, Sigma_stars, r)
+        sigmas_mol = 2 * np.pi * fmol_in * Sigma_gas * r #Add the 2PI*r to Sigma_gas to make integration.
+        sigmas_atom = 2 * np.pi * (1 - fmol_in) * Sigma_gas * r #Add the 2PI*r to Sigma_gas to make integration.
+
+        return sigmas_mol, sigmas_atom
 
 def compute_numerical_jmol(msdisk, rsdisk, mgdisk, rgdisk, mbulge, rbulge, mdm, rvir, c, mmol):
 
@@ -201,25 +205,31 @@ def compute_numerical_jmol(msdisk, rsdisk, mgdisk, rgdisk, mbulge, rbulge, mdm, 
     ngals = len(msdisk)
     nrbins = 100
     jmol_comp = np.zeros(shape = ngals)
-    mmol_comp = np.zeros(shape = ngals)
+    jatom_comp = np.zeros(shape = ngals)
 
+    mmol_comp = np.zeros(shape = ngals)
 
     #Msun/pc^2 Msun/(1e6 pc)^2, 
     for i in range(0,ngals):
         if((mgdisk[i]  > 0) & (rgdisk[i]  > 0) & (mmol[i] > 0)):
             sum_int = 0
+            sum_int_hi = 0
             sum_int_mol = 0
+            sum_int_atomass = 0
             dr = 5.0 * rgdisk[i] / nrbins 
             for j in range(1,nrbins):
                 r = dr * j
-                sigma_mol_bin = molecular_surface_density(r, mgdisk[i], rgdisk[i], msdisk[i], rsdisk[i])
-                sum_int += sigma_mol_bin * compute_v_r(r, msdisk[i], rsdisk[i], mgdisk[i], rgdisk[i], mbulge[i], rbulge[i], mdm[i], rvir[i], c[i]) * r * dr 
+                (sigma_mol_bin, sigma_atom_bin) = molecular_surface_density(r, mgdisk[i], rgdisk[i], msdisk[i], rsdisk[i])
+                v_at_r = compute_v_r(r, msdisk[i], rsdisk[i], mgdisk[i], rgdisk[i], mbulge[i], rbulge[i], mdm[i], rvir[i], c[i])
+                sum_int += sigma_mol_bin * v_at_r * r * dr 
+                sum_int_hi += sigma_atom_bin * v_at_r * r * dr
                 sum_int_mol += sigma_mol_bin * dr
+                sum_int_atomass += sigma_atom_bin * dr
             mmol_comp[i] = sum_int_mol
             jmol_comp[i] = sum_int / mmol_comp[i] 
+            jatom_comp[i] = sum_int_hi / sum_int_atomass
 
-
-    return jmol_comp
+    return jmol_comp, jatom_comp
 
 
 def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_atom2, sam_gas_disk_mol, sam_gas_disk_atom_ms, sam_halo, sam_ratio_halo_disk, sam_ratio_halo_gal, 
@@ -239,17 +249,21 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
      matom_bulge, mmol_bulge, mgas_bulge, sfr_disk, sfr_bulge, vmax, lx, ly, lz, cnfw, vvir_sub) = hdf5_data
 
     rvir_sb = G * mvir_s / vvir_sub**2
+    jmol        = (specific_angular_momentum_disk_gas_mol * mmol_disk + mmol_bulge * specific_angular_momentum_bulge_gas) / (mmol_disk + mmol_bulge)
+    jatom       = (specific_angular_momentum_disk_gas_atom * matom_disk + matom_bulge * specific_angular_momentum_bulge_gas) / (matom_disk + matom_bulge)
 
     massive_gals = np.where(((mdisk + mbulge)/h0 >= 1e8) & (mmol_disk > 0))
     jmol_approx        = (specific_angular_momentum_disk_gas_mol[massive_gals] * mmol_disk[massive_gals] + mmol_bulge[massive_gals] * specific_angular_momentum_bulge_gas[massive_gals]) / (mmol_disk[massive_gals] + mmol_bulge[massive_gals])
-    jmol_comp_detail = compute_numerical_jmol(mdisk[massive_gals]/h0, rdisk[massive_gals]/h0, mgas_disk[massive_gals], rg_disk[massive_gals]/h0, mbulge[massive_gals]/h0 + mgas_bulge[massive_gals]/h0, rbulge[massive_gals]/h0, mvir_s[massive_gals]/h0, rvir_sb[massive_gals]/h0, cnfw[massive_gals], mmol_disk[massive_gals]/h0)
+    jmol_comp_detail, jatom_comp_detail = compute_numerical_jmol(mdisk[massive_gals]/h0, rdisk[massive_gals]/h0, mgas_disk[massive_gals], rg_disk[massive_gals]/h0, mbulge[massive_gals]/h0 + mgas_bulge[massive_gals]/h0, rbulge[massive_gals]/h0, mvir_s[massive_gals]/h0, rvir_sb[massive_gals]/h0, cnfw[massive_gals], mmol_disk[massive_gals]/h0)
     jmol_detailed = (jmol_comp_detail * mmol_disk[massive_gals] + mmol_bulge[massive_gals] * specific_angular_momentum_bulge_gas[massive_gals]) / (mmol_disk[massive_gals] + mmol_bulge[massive_gals])
-    for a,b,c,d,e,f in zip(jmol_approx, jmol_comp_detail, (mmol_disk[massive_gals] + mmol_bulge[massive_gals])/h0, (mdisk[massive_gals] + mbulge[massive_gals])/h0, mbulge[massive_gals] / (mdisk[massive_gals] + mbulge[massive_gals]), (sfr_disk[massive_gals] + sfr_bulge[massive_gals])/h0/1e9):
-        print(a*1e3,b*1e3,c,d,e,f)
+    jatom_detailed = (jatom_comp_detail * matom_disk[massive_gals] + matom_bulge[massive_gals] * specific_angular_momentum_bulge_gas[massive_gals]) / (matom_disk[massive_gals] + matom_bulge[massive_gals])
+    jmol[massive_gals] = jmol_detailed
+    jatom[massive_gals] = jatom_detailed
+    #for a,b,c,d,e,f in zip(jmol_approx, jmol_comp_detail, (mmol_disk[massive_gals] + mmol_bulge[massive_gals])/h0, (mdisk[massive_gals] + mbulge[massive_gals])/h0, mbulge[massive_gals] / (mdisk[massive_gals] + mbulge[massive_gals]), (sfr_disk[massive_gals] + sfr_bulge[massive_gals])/h0/1e9):
+    #    print(a*1e3,b*1e3,c,d,e,f)
+    #print("detailed jmol calculation", jmol_comp_detail)
 
-
-    print("detailed jmol calculation", jmol_comp_detail)
-
+    
     ind = np.where(mmol_disk > 0) 
     print("sAM mol when mgas_mol>0", specific_angular_momentum_disk_gas_mol[ind])
     print("number of galaxies with mmol_disk > 0", len(mmol_disk[ind]))
@@ -299,10 +313,11 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
     jbar        = (specific_angular_momentum_disk_star * mdisk + specific_angular_momentum_disk_gas * mgas_disk ) / (mdisk + mbulge + mgas_disk + mgas_bulge)  
                    #specific_angular_momentum_bulge_star * mbulge + specific_angular_momentum_bulge_gas * mgas_bulge) / (mdisk + mbulge + mgas_disk + mgas_bulge)
     mbar        = (mdisk + mbulge + mgas_disk + mgas_bulge)
-    jbarv2      = (specific_angular_momentum_disk_star * mdisk + specific_angular_momentum_disk_gas * mgas_disk + specific_angular_momentum_bulge_star * mbulge + specific_angular_momentum_bulge_gas * mgas_bulge) / (mdisk + mbulge + mgas_disk + mgas_bulge)
+    jbarv2      = (specific_angular_momentum_disk_star * mdisk + jmol * (mmol_disk + mmol_bulge) + jatom * (matom_disk + matom_bulge)) / (mdisk + mbulge + mmol_disk + mmol_bulge + matom_disk + matom_bulge)
     #(specific_angular_momentum_disk_gas_atom * matom_disk + specific_angular_momentum_disk_star * mdisk + specific_angular_momentum_bulge_star * mbulge + matom_bulge * specific_angular_momentum_bulge_gas) / (mdisk + mbulge + matom_disk + matom_bulge)
-    mbarv2      = (mdisk + mbulge + mgas_disk + mgas_bulge)
-    jatom       = (specific_angular_momentum_disk_gas_atom * matom_disk + matom_bulge * specific_angular_momentum_bulge_gas) / (matom_disk + matom_bulge)
+    mbarv2      = (mdisk + mbulge + mmol_disk + mmol_bulge + matom_disk + matom_bulge)
+
+
 
     jgas        = (specific_angular_momentum_disk_gas * mgas_disk + specific_angular_momentum_bulge_gas * mgas_bulge) / (mgas_bulge + mgas_disk)
     mgas        = (mgas_bulge + mgas_disk)
