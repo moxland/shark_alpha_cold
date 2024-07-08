@@ -34,6 +34,14 @@ RExp     = 1.67
 MpcToKpc = 1e3
 G        = 4.299e-9 #Gravity constant in units of (km/s)^2 * Mpc/Msun
 XH = 1.33
+MSOLAR = 1.9891e30
+MSOLAR_g = MSOLAR * 1e3
+MPC2M = 3.0856775807e22
+MPC2CM = MPC2M * 1e2
+k_Boltzmann = 1.3806503e-23
+k_Boltzmann_erg = k_Boltzmann * 1.0e7
+Pressure_Conv =  np.pi/ 2 * G * MSOLAR_g / (MPC2CM)**3 *  1e10 / k_Boltzmann_erg
+
 
 #stellar mass bins
 mlow = 6.35
@@ -66,6 +74,154 @@ lbins = np.arange(llow,lupp,dl)
 xlf   = lbins + dl/2.0
 
 
+def v2halo (x, m, c, r):
+
+        cpx = 1 + c * x
+        cx = c * x
+        cp = 1 + c
+
+        v = G * m / r * (np.log(cpx) - cx/cpx) / (x * (np.log(cp) - c / cp))
+
+        return v
+
+
+def v2disk (x, m, c, r):
+
+        cx = c * x
+
+        nom = c + 4.8 * c * np.exp(-0.35 * cx - 3.5 /cx)
+        denom = cx + cx**(-2) + 2.0 * cx**(-0.5)
+
+        v = G * m / r * nom/denom
+
+        return v
+
+def v2bulge (x, m, c, r):
+
+    if(m <= 0): 
+        return 0
+    else:
+
+        cx = c * x;
+
+        nom = cx**(2.0) * c;
+        denom = (1 + cx**(2.0))**(1.5);
+
+        v = G * m / r * nom/denom;
+
+        return v
+
+
+def compute_v_r(r, msdisk, rsdisk, mgdisk, rgdisk, mbulge, rbulge, mdm, rvir, c):
+
+        #disk properties. Use composite size of disk.
+        cd_s = 0
+        if(rsdisk > 0):
+                cd_s = rvir / (rsdisk / 1.67)
+        cd_g = 0
+        if(rgdisk > 0):
+                cd_g = rvir / (rgdisk / 1.67)
+
+        cb = 0
+        if(rbulge > 0):
+                cb = rvir/(rbulge)
+
+        #halo properties.
+        ch = c
+        mvir = mdm
+
+        x = r / rvir;
+
+        #Rotational velocity at the half-mass radius of the disk.
+        v2tot_d = v2halo(x, mvir, ch, rvir) + v2disk(x, msdisk, cd_s, rvir) + v2disk(x, mgdisk, cd_g, rvir) + v2bulge(x, mbulge, cb, rvir)
+        return np.sqrt(v2tot_d)
+
+
+def midplane_pressure(Sigma_gas, Sigma_stars, r):
+
+        #/**
+        # * This function calculate the midplane pressure of the disk, and returns it in units of K/cm^-3.
+        # */
+
+        hstar = 0.14 * r #scaleheight of the stellar disk; from Kregel et al. (2002).
+        veldisp_star = np.sqrt(np.pi * G * hstar * Sigma_stars) #stellar velocity dispersion in km/s.
+
+        star_comp = 0
+
+        if ((Sigma_stars > 0) & (veldisp_star > 0)):
+                star_comp = (10.0 / veldisp_star) * Sigma_stars
+
+        pressure = Pressure_Conv * Sigma_gas * (Sigma_gas + star_comp) #in units of K/cm^3.
+
+        return pressure
+
+def fmol(Sigma_gas, Sigma_stars, r):
+
+        Po = 34673.0
+        beta_press = 0.92
+        rmol = (midplane_pressure(Sigma_gas,Sigma_stars,r)/Po)**beta_press;
+        fmol = rmol/(1+rmol);
+
+        if(fmol > 1):
+                return 1
+        elif((fmol > 0) & (fmol < 1)):
+                return fmol
+        else:
+                return 0
+
+
+
+def molecular_surface_density(r, mgas, rgas, mstar, rstar):
+
+        re = rgas / 1.67
+        sigma_gas0 = mgas / (2 * np.pi * re**2)
+        Sigma_gas = sigma_gas0 * np.exp(-r / re)
+
+        if(Sigma_gas <= 0):
+                Sigma_gas = 0
+
+        sigma_HI_crit = 0.0
+        # Check for low surface densities.
+        sigma_HI_crit = 0.5 * 1e12 #in Msun/Mpc^2
+        if(Sigma_gas <= sigma_HI_crit):
+                return 0
+
+        Sigma_stars = 0
+        # Define Sigma_stars only if stellar mass and radius are positive.
+        if((rstar > 0) & (mstar > 0)):
+                rse = rstar / 1.67
+                sigma_star0 = mstar / (2 * np.pi * rse**2)
+                Sigma_stars = sigma_star0 * np.exp(-r / rse)
+             
+        return 2 * np.pi * fmol(Sigma_gas, Sigma_stars, r) * Sigma_gas * r #Add the 2PI*r to Sigma_gas to make integration.
+
+def compute_numerical_jmol(msdisk, rsdisk, mgdisk, rgdisk, mbulge, rbulge, mdm, rvir, c, mmol):
+
+    #integrate from r=0 to 10*r50_disk
+    ngals = len(msdisk)
+    nrbins = 100
+    jmol_comp = np.zeros(shape = ngals)
+    mmol_comp = np.zeros(shape = ngals)
+
+
+    #Msun/pc^2 Msun/(1e6 pc)^2, 
+    for i in range(0,ngals):
+        if((mgdisk[i]  > 0) & (rgdisk[i]  > 0) & (mmol[i] > 0)):
+            sum_int = 0
+            sum_int_mol = 0
+            dr = 5.0 * rgdisk[i] / nrbins 
+            for j in range(1,nrbins):
+                r = dr * j
+                sigma_mol_bin = molecular_surface_density(r, mgdisk[i], rgdisk[i], msdisk[i], rsdisk[i])
+                sum_int += sigma_mol_bin * compute_v_r(r, msdisk[i], rsdisk[i], mgdisk[i], rgdisk[i], mbulge[i], rbulge[i], mdm[i], rvir[i], c[i]) * r * dr 
+                sum_int_mol += sigma_mol_bin * dr
+            mmol_comp[i] = sum_int_mol
+            jmol_comp[i] = sum_int / mmol_comp[i] 
+
+
+    return jmol_comp
+
+
 def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_disk_atom2, sam_gas_disk_mol, sam_gas_disk_atom_ms, sam_halo, sam_ratio_halo_disk, sam_ratio_halo_gal, 
                  sam_ratio_halo_disk_gas, disk_size_sat, disk_size_cen, bulge_size, sam_vs_sam_halo_disk, sam_vs_sam_halo_gal,
                  sam_vs_sam_halo_disk_gas, sam_bar, sam_stars, sam_stars2, vmax_halo_gal, sam_barv2, disk_size, rcomb): #, phot_data, phot_data_nod, nbands):
@@ -80,7 +236,19 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
      mBH, rdisk, rbulge, rg_disk, rg_bulge, typeg, specific_angular_momentum_disk_star, specific_angular_momentum_bulge_star, 
      specific_angular_momentum_disk_gas, specific_angular_momentum_bulge_gas, specific_angular_momentum_disk_gas_atom, 
      specific_angular_momentum_disk_gas_mol, lambda_sub, mvir_s, mvir, matom_disk, mmol_disk, mgas_disk,
-     matom_bulge, mmol_bulge, mgas_bulge, sfr_disk, sfr_bulge, vmax, lx, ly, lz) = hdf5_data
+     matom_bulge, mmol_bulge, mgas_bulge, sfr_disk, sfr_bulge, vmax, lx, ly, lz, cnfw, vvir_sub) = hdf5_data
+
+    rvir_sb = G * mvir_s / vvir_sub**2
+
+    massive_gals = np.where(((mdisk + mbulge)/h0 >= 1e8) & (mmol_disk > 0))
+    jmol_approx        = (specific_angular_momentum_disk_gas_mol[massive_gals] * mmol_disk[massive_gals] + mmol_bulge[massive_gals] * specific_angular_momentum_bulge_gas[massive_gals]) / (mmol_disk[massive_gals] + mmol_bulge[massive_gals])
+    jmol_comp_detail = compute_numerical_jmol(mdisk[massive_gals]/h0, rdisk[massive_gals]/h0, mgas_disk[massive_gals], rg_disk[massive_gals]/h0, mbulge[massive_gals]/h0 + mgas_bulge[massive_gals]/h0, rbulge[massive_gals]/h0, mvir_s[massive_gals]/h0, rvir_sb[massive_gals]/h0, cnfw[massive_gals], mmol_disk[massive_gals]/h0)
+    jmol_detailed = (jmol_comp_detail * mmol_disk[massive_gals] + mmol_bulge[massive_gals] * specific_angular_momentum_bulge_gas[massive_gals]) / (mmol_disk[massive_gals] + mmol_bulge[massive_gals])
+    for a,b,c,d,e,f in zip(jmol_approx, jmol_comp_detail, (mmol_disk[massive_gals] + mmol_bulge[massive_gals])/h0, (mdisk[massive_gals] + mbulge[massive_gals])/h0, mbulge[massive_gals] / (mdisk[massive_gals] + mbulge[massive_gals]), (sfr_disk[massive_gals] + sfr_bulge[massive_gals])/h0/1e9):
+        print(a*1e3,b*1e3,c,d,e,f)
+
+
+    print("detailed jmol calculation", jmol_comp_detail)
 
     ind = np.where(mmol_disk > 0) 
     print("sAM mol when mgas_mol>0", specific_angular_momentum_disk_gas_mol[ind])
@@ -135,7 +303,6 @@ def prepare_data(hdf5_data, index, sam_stars_disk, sam_gas_disk_atom, sam_gas_di
     #(specific_angular_momentum_disk_gas_atom * matom_disk + specific_angular_momentum_disk_star * mdisk + specific_angular_momentum_bulge_star * mbulge + matom_bulge * specific_angular_momentum_bulge_gas) / (mdisk + mbulge + matom_disk + matom_bulge)
     mbarv2      = (mdisk + mbulge + mgas_disk + mgas_bulge)
     jatom       = (specific_angular_momentum_disk_gas_atom * matom_disk + matom_bulge * specific_angular_momentum_bulge_gas) / (matom_disk + matom_bulge)
-    jmol        = (specific_angular_momentum_disk_gas_mol * mmol_disk + mmol_bulge * specific_angular_momentum_bulge_gas) / (mmol_disk + mmol_bulge)
 
     jgas        = (specific_angular_momentum_disk_gas * mgas_disk + specific_angular_momentum_bulge_gas * mgas_bulge) / (mgas_bulge + mgas_disk)
     mgas        = (mgas_bulge + mgas_disk)
@@ -1452,7 +1619,8 @@ def main(modeldir, outdir, redshift_table, subvols, obsdir):
                            'specific_angular_momentum_disk_gas', 'specific_angular_momentum_bulge_gas',
                            'specific_angular_momentum_disk_gas_atom', 'specific_angular_momentum_disk_gas_mol',
                            'lambda_subhalo', 'mvir_subhalo', 'mvir_hosthalo', 'matom_disk', 'mmol_disk', 'mgas_disk',
-                           'matom_bulge', 'mmol_bulge', 'mgas_bulge','sfr_disk', 'sfr_burst','vmax_subhalo', 'l_x', 'l_y', 'l_z')}
+                           'matom_bulge', 'mmol_bulge', 'mgas_bulge','sfr_disk', 'sfr_burst','vmax_subhalo', 'l_x', 'l_y', 'l_z', 
+                           'cnfw_subhalo', 'vvir_subhalo')}
     fields_sed = {'SED/ab_dust': ('bulge_d','bulge_m','bulge_t','disk','total'),}
     fields_sed_nod = {'SED/ab_nodust': ('bulge_d','bulge_m','bulge_t','disk','total')}
 
