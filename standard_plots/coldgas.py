@@ -567,10 +567,10 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
 
     #Predicted relation for all galaxies
-    ind = np.where((mgas_gals[0,:] > 0) & (mgas_gals[1,:] != 0) )
-    xdata = mgas_gals[0,ind]
-    ydata = mgas_gals[1,ind]
-    us.density_contour(ax, xdata[0], ydata[0], 30, 30) #, **contour_kwargs)
+    #ind = np.where((mgas_gals[0,:] > 0) & (mgas_gals[1,:] != 0) )
+    #xdata = mgas_gals[0,ind]
+    #ydata = mgas_gals[1,ind]
+    #us.density_contour(ax, xdata[0], ydata[0], 30, 30) #, **contour_kwargs)
 
     def plot_mrelation(mrelation, color, label=None, linestyle=None):
         ind = np.where(mrelation[0,:] != 0)
@@ -590,7 +590,7 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
         ax.fill_between(xplot,yplot[0],yplot[0]-errdn[0], facecolor=colorfill, alpha=0.2,interpolate=True)
         ax.fill_between(xplot,yplot[0],yplot[0]+errup[0], facecolor=colorfill, alpha=0.2,interpolate=True)
 
-    plot_mrelation(mgas_relation, 'k', linestyle='solid', label="Shark all galaxies")
+    plot_mrelation_fill(mgas_relation, 'k', 'k', linestyle='solid', label="Shark all galaxies")
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     add_observations_to_plot(obs_dir, 'NeutralGasRatio_NonDetEQZero.dat', ax, '^', "xCOLDGAS+xGASS(0)", color='grey')
@@ -622,11 +622,11 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
 
     #Predicted relation
-    ind = np.where((mh1_gals[0,:] > 0) & (mh1_gals[1,:] != 0) )
-    xdata = mh1_gals[0,ind]
-    ydata = mh1_gals[1,ind]
-    us.density_contour(ax, xdata[0], ydata[0], 30, 30) #, **contour_kwargs)
-    plot_mrelation(mh1_relation, 'k', linestyle='solid')
+    #ind = np.where((mh1_gals[0,:] > 0) & (mh1_gals[1,:] != 0) )
+    #xdata = mh1_gals[0,ind]
+    #ydata = mh1_gals[1,ind]
+    #us.density_contour(ax, xdata[0], ydata[0], 30, 30) #, **contour_kwargs)
+    plot_mrelation_fill(mh1_relation, 'k', 'k', linestyle='solid')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     add_observations_to_plot(obs_dir, 'HIGasRatio_NonDetEQZero.dat', ax, '^', "xGASS(0)", color='grey')
@@ -669,11 +669,11 @@ def plot_molecular_gas_fraction(plt, output_dir, obs_dir, mgas_gals, mgas_relati
     prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit)
 
     #Predicted relation
-    ind = np.where((mh2_gals[0,:] > 0) & (mh2_gals[1,:] != 0) )
-    xdata = mh2_gals[0,ind]
-    ydata = mh2_gals[1,ind]
-    us.density_contour(ax, xdata[0], ydata[0], 30, 30) #, **contour_kwargs)
-    plot_mrelation(mh2_relation, 'k', linestyle='solid')
+    #ind = np.where((mh2_gals[0,:] > 0) & (mh2_gals[1,:] != 0) )
+    #xdata = mh2_gals[0,ind]
+    #ydata = mh2_gals[1,ind]
+    #us.density_contour(ax, xdata[0], ydata[0], 30, 30) #, **contour_kwargs)
+    plot_mrelation_fill(mh2_relation, 'k', 'k', linestyle='solid')
 
     #Baldry (Chabrier IMF), ['Baldry+2012, z<0.06']
     add_observations_to_plot(obs_dir, 'MolecularGasRatio_NonDetEQZero.dat', ax, '^', "xCOLDGASS(0)", color='grey')
