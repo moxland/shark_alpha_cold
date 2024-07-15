@@ -143,9 +143,6 @@ public:
 	float r_rps = 0;
 	BaryonBase ram_pressure_stripped_gas;
 
-        // stellar mass at infall (before the galaxy becomes a satellite)
-        BaryonBase star_central_infall;
-  
 	/// star formation and gas history of this galaxy across snapshots
 	std::vector<HistoryItem> history;
 
