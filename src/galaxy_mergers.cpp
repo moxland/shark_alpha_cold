@@ -694,7 +694,7 @@ double GalaxyMergers::bulge_size_merger(double mass_ratio, double mgas_ratio, co
 
 	double r = r_remnant(mtotal_central, mbar_satellite, rcentral, rsatellite);
 
-	if((std::isnan(r) || r <= 0 || r >= 3) && (mtotal_central > 0 || mbar_satellite > 0)){
+	if((std::isnan(r) || r <= 0 || r >= 5) && (mtotal_central > 0 || mbar_satellite > 0)){
 		std::ostringstream os;
 		os << central << " has a bulge size not well defined in galaxy mergers: " << r << " with central and satellite radii " <<
 				rcentral << " and " << rsatellite << " and masses central satellite " << mtotal_central << " " << mbar_satellite
