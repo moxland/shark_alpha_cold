@@ -287,8 +287,10 @@ public:
 	bool main_progenitor = false;
 	/// Whether this subhalo is the result of an interpolation in snapshots were descendants were missing. In this case Dhalos puts a subhalo in those snapshots  to ensure continuation of the merger tree.
 	bool IsInterpolated = false;
-        /// Whether this subhalo is a massive transients.
-        int transient = 0;
+        /// Whether this subhalo is a massive transient.
+        bool transient = false;
+        /// Whether this transient subhalo has had the main progenitor flag changed.
+        bool remove_mp_flag = false;
   
 private:
 	void do_check_satellite_subhalo_galaxy_composition() const;

@@ -55,6 +55,11 @@ ExecutionParameters::ExecutionParameters(const Options &options)
 
 	options.load("execution.output_bh_histories", output_bh_histories);
 	options.load("execution.snapshots_bh_histories", snapshots_bh_histories);
+
+        options.load("execution.apply_fix_to_massive_transient_events", apply_fix_to_massive_transient_events);
+        options.load("execution.transient_lostmass_ratio", transient_lostmass_ratio);
+        options.load("execution.transient_gainedmass_ratio_low", transient_gainedmass_ratio_low);
+        options.load("execution.transient_gainedmass_ratio_up", transient_gainedmass_ratio_up);
 }
 
 bool ExecutionParameters::output_snapshot(int snapshot)

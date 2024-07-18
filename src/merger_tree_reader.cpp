@@ -143,9 +143,8 @@ const std::vector<SubhaloPtr> SURFSReader::read_subhalos(unsigned int batch)
 	if (!transients_prefix.empty()){
 	        // read transients file
 	        const auto fname_transients = get_transients_filename(batch);
-		hdf5::Reader batch_transients(fname_transients);
+	        hdf5::Reader batch_transients(fname_transients);
 		transientsIndex = batch_transients.read_dataset_v<Subhalo::id_t>("nodeIndex");
-		//		transientsHostIndex = batch_transients.read_dataset_v<Subhalo::id_t>("hostIndex");
 	}
 	  
 	auto n_subhalos = Mvir.size();
@@ -292,6 +291,17 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch)
 	std::vector<HaloPtr> halos;
 	Halo::id_t last_halo_id = -1;
 	Timer t;
+
+	// Read transients file
+	std::vector<Halo::id_t> transientsHostIndex;
+
+	if (!transients_prefix.empty()){
+	        // read transients file
+	        const auto fname_transients = get_transients_filename(batch);
+	        hdf5::Reader batch_transients(fname_transients);
+	        transientsHostIndex = batch_transients.read_dataset_v<Halo::id_t>("hostIndex");
+	}
+
 	for(auto &subhalo: subhalos) {
 
 		auto halo_id = subhalo->haloID;
@@ -308,10 +318,10 @@ const std::vector<HaloPtr> SURFSReader::read_halos(unsigned int batch)
 		}
 		subhalo->host_halo = halo;
 		halo->add_subhalo(std::move(subhalo));
-//		if (!transients_prefix.empty()){
-//			// create flag to indicate this halo is transient
-//		        halo->transient = std::find(std::begin(transientsHostIndex), std::end(transientsHostIndex), hostIndex[i]) != std::end(transientsHostIndex);
-//		}
+		if (!transients_prefix.empty()){
+			// create flag to indicate this halo hosts a transient
+		        halo->transient = std::find(std::begin(transientsHostIndex), std::end(transientsHostIndex), halo_id) != std::end(transientsHostIndex);
+		}
 	}
 	subhalos.clear();
 

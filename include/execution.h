@@ -85,6 +85,16 @@ public:
 	float ode_solver_precision = 0;
 	int ignore_npart_threshold = 1000;
 	float ignore_below_z = 1.0;
+
+        // massive transients parameters
+        // flag to apply fixes for them
+        bool apply_fix_to_massive_transient_events = true;
+        // Mass_DSH/Mass_SH minimum decrease value
+        float transient_lostmass_ratio = 0.7;
+        // Mass_TDSH/Mass_SH minimum increase value
+        float transient_gainedmass_ratio_low = 0.0;
+        // Mass_TDSH/Mass_SH maximum increase value
+        float transient_gainedmass_ratio_up = 1.5;
 };
 
 } // namespace shark
