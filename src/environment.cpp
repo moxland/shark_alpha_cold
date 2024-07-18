@@ -261,7 +261,14 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 
 			// compute how much has been lost since galaxy infall
 			float ratio_sm = std::pow(2, 3.57) * std::pow(ratio_mass, 2.06) / std::pow( 1 + ratio_mass, 3.57);
-			lost_stellar.mass = ratio_sm * satellite_subhalo.type1_galaxy()->star_central_infall.mass;
+			if(ratio_sm < 0){
+				ratio_sm = 0;
+			}
+			if(ratio_sm > 1){
+				ratio_sm = 1;
+			}
+
+			lost_stellar.mass = (1 - ratio_sm) * satellite_subhalo.star_central_infall.mass;
 
 			if(lost_stellar.mass < 0){
 				lost_stellar.restore_baryon();
@@ -288,7 +295,7 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 				// is stars_tidal_stripped.mass>0 is because stripping should have occurred already.
 				if(satellite.stars_tidal_stripped.mass == 0){
 					// compute how much has been lost since galaxy infall
-					lost_stellar.mass = ratio_sm * satellite.star_central_infall.mass;
+				        lost_stellar.mass = (1 - ratio_sm) * satellite.stellar_mass();
 
 					lost_stellar = remove_tidal_stripped_stars(central_subhalo, satellite, lost_stellar);
 

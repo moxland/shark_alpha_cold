@@ -363,7 +363,7 @@ void DarkMatterHalos::cooling_gas_sAM(Subhalo &subhalo, double z){
 
 float DarkMatterHalos::enclosed_total_mass(const Subhalo &subhalo, double z, float r){
 
-	ConstGalaxyPtr galaxy;
+	ConstGalaxyPtr galaxy = nullptr;
 
 	double mvir = 0;
 	double rvir = 0;

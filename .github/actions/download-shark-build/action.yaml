@@ -3,7 +3,7 @@ runs:
   using: composite
   steps:
     - name: Download shark build tarball
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: shark-build
 

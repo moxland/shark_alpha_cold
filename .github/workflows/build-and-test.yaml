@@ -20,7 +20,7 @@ jobs:
         omp: [true, false]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
 
@@ -61,7 +61,7 @@ jobs:
 
       - name: Upload shark build for next jobs (Linux)
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.omp }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: shark-build
           path: shark-build.tar.gz
@@ -71,7 +71,7 @@ jobs:
     needs: build_and_test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: ./.github/actions/download-shark-build
 
@@ -87,13 +87,13 @@ jobs:
         run: .ci/run_shark.sh my_model -o execution.seed=${TEST_FIXED_SEED}
 
       - name: Upload shark output for next jobs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: shark-output
           path: ${{ env.TEST_OUTPUTS_DIR }}
 
       - name: Upload shark inputs for next jobs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: shark-input
           path: ${{ env.TEST_INPUTS_DIR }}
@@ -103,12 +103,12 @@ jobs:
     needs: initial_shark_run
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install HDF5 tools
         run: sudo apt install hdf5-tools
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: shark-output
           path: ${{ env.TEST_OUTPUTS_DIR }}
@@ -127,17 +127,17 @@ jobs:
     # with some plots
     if: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: shark-output
           path: ${{ env.TEST_OUTPUTS_DIR }}
 
       - name: Install Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
       - name: Install Python dependencies
         run: pip install matplotlib h5py scipy
@@ -154,24 +154,24 @@ jobs:
     needs: initial_shark_run
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: ./.github/actions/download-shark-build
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: shark-output
           path: ${{ env.TEST_OUTPUTS_DIR }}
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: shark-input
           path: ${{ env.TEST_INPUTS_DIR }}
 
       - name: Install Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
       - name: Install Python dependencies
         run: pip install h5py

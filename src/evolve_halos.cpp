@@ -53,10 +53,9 @@ void adjust_main_galaxy(const SubhaloPtr &parent, const SubhaloPtr &descendant)
 	// Define the stellar content of the central at the moment of infall. So this applies only to subhalos that are currently central but will become
 	// satellite in the next snapshot. In this case also transfer stellar halo of the subhalo to the main progenitor subhalo.
 	if(parent_is_central && !desc_is_central){
-		// stellar mass at infall for galaxies type 1-2 (2 do not have a subhalo attached)
-		main_galaxy->star_central_infall.mass = main_galaxy->stellar_mass();
-		main_galaxy->star_central_infall.mass_metals = main_galaxy->stellar_mass_metals();
-
+	        // stellar mass at infall for galaxies type 1-2 (2 do not have a subhalo attached)
+	        //main_galaxy->star_central_infall.mass = main_galaxy->stellar_mass();
+		//main_galaxy->star_central_infall.mass_metals = main_galaxy->stellar_mass_metals();
 		// stellar mass at infall for galaxies type 1 (have a subhalo attached)
 		descendant->star_central_infall.mass = main_galaxy->stellar_mass();
 		descendant->star_central_infall.mass_metals = main_galaxy->stellar_mass_metals();

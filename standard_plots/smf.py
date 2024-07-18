@@ -1178,18 +1178,21 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf, sfr_hi):
 
     common.prepare_ax(ax, xmin, xmax, ymin, ymax, xtit, ytit, locators=(0.1, 1, 0.1, 1))
 
-    ind = np.where(sfr_seq[1,:] < -3)
-    sfr_seq[1,ind] = -3
-    #predicted relation
-    ind = np.where((sfr_seq[0,:] > 7) & (sfr_seq[0,:] < 13) & (sfr_seq[1,:] >-10) & (sfr_seq[1,:] < 10))
-    xdata = sfr_seq[0,ind]
-    ydata = sfr_seq[1,ind]
-    us.density_contour(ax, xdata[0], ydata[0], 30, 30, cmap = 'cividis') #, **contour_kwargs)
+    #ind = np.where(sfr_seq[1,:] < -3)
+    #sfr_seq[1,ind] = -3
+    ##predicted relation
+    #ind = np.where((sfr_seq[0,:] > 7) & (sfr_seq[0,:] < 13) & (sfr_seq[1,:] >-10) & (sfr_seq[1,:] < 10))
+    #xdata = sfr_seq[0,ind]
+    #ydata = sfr_seq[1,ind]
+    #us.density_contour(ax, xdata[0], ydata[0], 30, 30, cmap = 'cividis') #, **contour_kwargs)
 
     ind = np.where(sfr_seq[0,:] > 0)
     toplot = bin_it(x=sfr_seq[0,ind], y=sfr_seq[1,ind])
     ind = np.where(toplot[0,:] != 0)
-    yp = toplot[0,ind] 
+    yp = toplot[0,ind]
+    ydn = toplot[0,ind] - toplot[1,ind]
+    yup = toplot[2,ind] + toplot[0,ind]
+    ax.fill_between(xmf[ind], ydn[0], yup[0], color='k', alpha = 0.25, linestyle='solid', linewidth = 2)
     ax.plot(xmf[ind], yp[0],color='k',linestyle='solid', linewidth = 2, label="Shark v2.0")
 
     xm, ym = common.load_observation(obsdir, 'Models/SharkVariations/SFRMstars_Lagos18.dat', [0,1])
@@ -1219,16 +1222,15 @@ def plot_sfr_mstars_z0(plt, outdir, obsdir, h0, sfr_seq, mainseqsf, sfr_hi):
     ind = np.where(sfr_gama < 1e-3)
     sfr_gama[ind] = 1e-3
     #ax.hexbin(np.log10(ms_gama), np.log10(sfr_gama), gridsize=(20,20), mincnt=5) #, cmap = 'plasma') #, **contour_kwargs)
-    us.density_contour_reduced(ax, np.log10(ms_gama), np.log10(sfr_gama), 25, 25) #, **contour_kwargs)
+    #us.density_contour_reduced(ax, np.log10(ms_gama), np.log10(sfr_gama), 25, 25) #, **contour_kwargs)
 
     toplot = bin_it(x=np.log10(ms_gama), y=np.log10(sfr_gama))
     ind = np.where(toplot[0,:] != 0)
     yp = toplot[0,ind]
-    yup = toplot[2,ind]
-    ydn = toplot[1,ind]
+    yup = toplot[2,ind] + toplot[0,ind]
+    ydn = toplot[0,ind] - toplot[1,ind]
+    ax.fill_between(xmf[ind], ydn[0], yup[0], color='Maroon', alpha = 0.1, linestyle='solid', linewidth = 2)
     ax.plot(xmf[ind], yp[0],color='Maroon',linestyle='dashed', linewidth = 5, label="Bellstedt+20")
-#ax.plot(xmf[ind], yp[0]+yup[0],color='PaleVioletRed',linestyle='dotted', linewidth = 5)
-    #ax.plot(xmf[ind], yp[0]-ydn[0],color='PaleVioletRed',linestyle='dotted', linewidth = 5)
 
     # individual massive galaxies from Terrazas+17
     ms, sfr, upperlimflag = common.load_observation(obsdir, 'BHs/MBH_host_gals_Terrazas17.dat', [0,1,2])

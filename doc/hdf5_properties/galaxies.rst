@@ -180,4 +180,3 @@
 * ``l_y``: total angular momentum component y of galaxy [Msun pMpc km/s]. From VELOCIraptor.
 * ``l_z``: total angular momentum component z of galaxy [Msun pMpc km/s]. From VELOCIraptor.
 * ``main_progenitor``: =1 if subhalo is the main progenitor' =0 otherwise.
-
