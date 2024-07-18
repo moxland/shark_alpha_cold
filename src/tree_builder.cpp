@@ -215,25 +215,25 @@ SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhal
 	halo->position = subhalo->position;
 	halo->velocity = subhalo->velocity;
 
-	double mvir = subhalo->Mvir;
-
-	// calculate subhalo properties based on halo mass if number of particles is too small or in the case of applying the fix to mass swapping events:
-	if(dark_matter_params.apply_fix_to_mass_swapping_events){
-		mvir = halo->Mvir;
-	}
-
 	double z = sim_params.redshifts[subhalo->snapshot];
 	double npart = subhalo->Mvir/sim_params.particle_mass;
 
-	subhalo->concentration = darkmatterhalos->nfw_concentration(mvir, z);
-	
-	if (subhalo->concentration < 1) {
-	        throw invalid_argument("concentration is <1, cannot continue. Please check input catalogue");
+	// calculate subhalo properties based on halo mass in the case of applying the fix to mass swapping events:
+	if(dark_matter_params.apply_fix_to_mass_swapping_events){
+
+	        auto mvir = halo->Mvir;
+
+		subhalo->concentration = darkmatterhalos->nfw_concentration(mvir, z);
+		
+		if (subhalo->concentration < 1) {
+		        throw invalid_argument("concentration is <1, cannot continue. Please check input catalogue");
+		}
+		subhalo->lambda = darkmatterhalos->halo_lambda(*subhalo, mvir, z, npart);
+		subhalo->Vvir = darkmatterhalos->halo_virial_velocity(mvir, z);
 	}
-	subhalo->lambda = darkmatterhalos->halo_lambda(*subhalo, mvir, z, npart);
-	subhalo->Vvir = darkmatterhalos->halo_virial_velocity(mvir, z);
 
 	halo->lambda = subhalo->lambda;
+	// Calculate halos' vvir and concentration
 	halo->Vvir = darkmatterhalos->halo_virial_velocity(halo->Mvir, z);
 	halo->concentration = darkmatterhalos->nfw_concentration(halo->Mvir,z);
 
