@@ -92,9 +92,9 @@ public:
         // Mass_DSH/Mass_SH minimum decrease value
         float transient_lostmass_ratio = 0.7;
         // Mass_TDSH/Mass_SH minimum increase value
-        float transient_gainedmass_ratio_low = 0.0;
+        float transient_gainedmass_ratio_low = 0.1;
         // Mass_TDSH/Mass_SH maximum increase value
-        float transient_gainedmass_ratio_up = 1.5;
+        float transient_gainedmass_ratio_up = 3;
 };
 
 } // namespace shark

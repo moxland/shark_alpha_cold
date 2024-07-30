@@ -798,7 +798,6 @@ void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos, Execu
 				  // (only for snapshots earlier than the last one when descendant subhalos are well defined)
 				  // when there is a mass decrease, we can connent to the gained mass by the transient
 				  if(exec_params.apply_fix_to_massive_transient_events && descendant_halo->transient &&
-				     snapshot != sorted_halo_snapshots[0] &&
 				     subhalo->Mvir > descendant_subhalo->Mvir){
 
 				          // flag to indicate if the transient has been linked
@@ -818,15 +817,34 @@ void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos, Execu
 						          // between a lower and an upper limit, controlled by "transient_gainedmass_ratio_low" and "transient_gainedmass_ratio_up"
 						          if(descendant_check_transient_subhalo->Mvir > descendant_subhalo->Mvir &&
 							     (descendant_subhalo->Mvir/subhalo->Mvir) < exec_params.transient_lostmass_ratio &&
-							     exec_params.transient_gainedmass_ratio_low < (descendant_check_transient_subhalo->Mvir/subhalo->Mvir) < exec_params.transient_gainedmass_ratio_up){
- 							          // subhalo-transient connection
+							     (descendant_check_transient_subhalo->Mvir/subhalo->Mvir) < exec_params.transient_gainedmass_ratio_up &&
+							     (descendant_check_transient_subhalo->Mvir/subhalo->Mvir) > exec_params.transient_gainedmass_ratio_low){
+							    
+//							          // looking at longer branches: compute how many snapshots forward in time the subhalos live
+//							          int snap_sh = 0;
+//								  int snap_mt = 0;
+//								  auto desc_sh = descendant_subhalo;
+//								  while(desc_sh->descendant && desc_sh->main_progenitor){
+//								          snap_sh++;
+//								          desc_sh = desc_sh->descendant;
+//								  }
+//								  auto desc_mt = descendant_check_transient_subhalo;
+//								  while(desc_mt->descendant && desc_mt->main_progenitor){
+//								          snap_mt++;
+//									  desc_mt = desc_mt->descendant;
+//							          }
+//
+//							          // if the transient length is longer then we should break the link
+//								  if(snap_mt > snap_sh){
+
+							          // subhalo-transient connection
 							          link(subhalo, descendant_check_transient_subhalo, halo, descendant_halo);
 								  subhalo->descendant_id = descendant_check_transient_subhalo->id;
 								  // not dealing with this particular transient anymore
 								  descendant_check_transient_subhalo->transient = false;
 								  // flag that the transient has been linked
 								  transient_linked = true;
-
+								  
 								  if(descendant_check_transient_subhalo->id == descendant_halo->id){
 								          // transient link counted as central for statistics
 								          count_transient_central++;
@@ -835,14 +853,17 @@ void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos, Execu
 								          // transient link counted as satellite for statistics
 								          count_transient_sat++;
 								  }
-								  
+									  
 								  // if the mp flag had been removed and counted as that
 								  // we remove it from that category for statistics
- 								  if(descendant_check_transient_subhalo->remove_mp_flag){
-								          count_transient_mp--;
+								  if(descendant_check_transient_subhalo->remove_mp_flag){
+								          // redefine again the flag if it was removed
+								          descendant_check_transient_subhalo->main_progenitor = true; 
+									  count_transient_mp--;
 								  }
 								  // transient fixed, loop can be skipped 
 								  break;
+//								  }
 							  }
 
 							  // if the transient does not fulfill the previous criteria, at least
@@ -854,8 +875,6 @@ void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos, Execu
 								  descendant_check_transient_subhalo->remove_mp_flag = true;
 								  // count it as removing the mp flag
  								  count_transient_mp++;
-								  // transient fixed, loop can be skipped 
-								  break;
 							  }
 							  
 						  }
@@ -864,13 +883,6 @@ void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos, Execu
 					  // if transient is not linked, then apply normal subhalo-descendant subhalo connection
 					  if(!transient_linked){
 					          link(subhalo, descendant_subhalo, halo, descendant_halo);
-					  }
-					  // if transient is linked, then remove the mp flag for all the descendant subhalos
-					  // in that descendant halo so that mp are chosen by mass
-					  else{
-					    for(const auto &descendant_transient_subhalo: descendant_halo->all_subhalos()){
-					      descendant_transient_subhalo->main_progenitor = false;
-					    }
 					  }
 				  }
 
