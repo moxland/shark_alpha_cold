@@ -58,6 +58,8 @@ protected:
 
 	void link(const SubhaloPtr &parent_shalo, const SubhaloPtr &desc_subhalo,
 	          const HaloPtr &parent_halo, const HaloPtr &desc_halo);
+        void massive_transient_fix(const SubhaloPtr &subhalo, const SubhaloPtr &descendant_subhalo, const HaloPtr &halo, const HaloPtr &descendant_halo,
+				   ExecutionParameters exec_params, int count_transient_central, int count_transient_sat, int count_transient_mp);
 
 private:
 	void ensure_trees_are_self_contained(const std::vector<MergerTreePtr> &trees) const;

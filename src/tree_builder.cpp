@@ -219,7 +219,7 @@ SubhaloPtr TreeBuilder::define_central_subhalo(HaloPtr &halo, SubhaloPtr &subhal
 	double z = sim_params.redshifts[subhalo->snapshot];
 	double npart = subhalo->Mvir/sim_params.particle_mass;
 
-	// calculate subhalo properties based on halo mass in the case of applying the fix to mass swapping events:
+	// calculate accurate subhalo properties based on halo mass in the case of applying the fix to mass swapping events:
 	if(dark_matter_params.apply_fix_to_mass_swapping_events){
 
 	        auto mvir = halo->Mvir;
@@ -794,96 +794,13 @@ void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos, Execu
 				if (descendant_subhalo) {
 				  
 				  // if fixes for the massive transients are applied, we look at the descendant halo
-				  // if the descendant subhalo hosts any transient, we check whether this subhalo decreases in mass
-				  // (only for snapshots earlier than the last one when descendant subhalos are well defined)
-				  // when there is a mass decrease, we can connent to the gained mass by the transient
+				  // if the descendant halo hosts any transient, we check whether this subhalo decreases in mass
+				  // when there is a mass decrease, we evaluate if there is a more accurate connection with the transient
 				  if(exec_params.apply_fix_to_massive_transient_events && descendant_halo->transient &&
 				     subhalo->Mvir > descendant_subhalo->Mvir){
 
-				          // flag to indicate if the transient has been linked
-				          // otherwise a normal link is carried out
-				          bool transient_linked = false;
-					  
-				          // loop over all the descendant subhalos until finding the transient
-				          for(const auto &descendant_check_transient_subhalo: descendant_halo->all_subhalos()){
-					          if(descendant_check_transient_subhalo->transient){
-						    
-						          // several conditions are imposed before breaking the subhalo-descendant subhalo connection
-						          // and creating the subhalo-transient connection:
-						          // 1. transient is more massive than current descendant
-						          // 2. subhalo-descendant subhalo connection (which will be broken) has
-						          // a decrease in mass greater than a threshold, controlled by "transient_lostmass_ratio" 
-						          // 3. subhalo-transient connenction has a reasonable change in mass
-						          // between a lower and an upper limit, controlled by "transient_gainedmass_ratio_low" and "transient_gainedmass_ratio_up"
-						          if(descendant_check_transient_subhalo->Mvir > descendant_subhalo->Mvir &&
-							     (descendant_subhalo->Mvir/subhalo->Mvir) < exec_params.transient_lostmass_ratio &&
-							     (descendant_check_transient_subhalo->Mvir/subhalo->Mvir) < exec_params.transient_gainedmass_ratio_up &&
-							     (descendant_check_transient_subhalo->Mvir/subhalo->Mvir) > exec_params.transient_gainedmass_ratio_low){
-							    
-//							          // looking at longer branches: compute how many snapshots forward in time the subhalos live
-//							          int snap_sh = 0;
-//								  int snap_mt = 0;
-//								  auto desc_sh = descendant_subhalo;
-//								  while(desc_sh->descendant && desc_sh->main_progenitor){
-//								          snap_sh++;
-//								          desc_sh = desc_sh->descendant;
-//								  }
-//								  auto desc_mt = descendant_check_transient_subhalo;
-//								  while(desc_mt->descendant && desc_mt->main_progenitor){
-//								          snap_mt++;
-//									  desc_mt = desc_mt->descendant;
-//							          }
-//
-//							          // if the transient length is longer then we should break the link
-//								  if(snap_mt > snap_sh){
-
-							          // subhalo-transient connection
-							          link(subhalo, descendant_check_transient_subhalo, halo, descendant_halo);
-								  subhalo->descendant_id = descendant_check_transient_subhalo->id;
-								  // not dealing with this particular transient anymore
-								  descendant_check_transient_subhalo->transient = false;
-								  // flag that the transient has been linked
-								  transient_linked = true;
-								  
-								  if(descendant_check_transient_subhalo->id == descendant_halo->id){
-								          // transient link counted as central for statistics
-								          count_transient_central++;
-								  }
-								  else{
-								          // transient link counted as satellite for statistics
-								          count_transient_sat++;
-								  }
-									  
-								  // if the mp flag had been removed and counted as that
-								  // we remove it from that category for statistics
-								  if(descendant_check_transient_subhalo->remove_mp_flag){
-								          // redefine again the flag if it was removed
-								          descendant_check_transient_subhalo->main_progenitor = true; 
-									  count_transient_mp--;
-								  }
-								  // transient fixed, loop can be skipped 
-								  break;
-//								  }
-							  }
-
-							  // if the transient does not fulfill the previous criteria, at least
-							  // the mp flag is removed so that it does not deviate branches when
-							  // it is not the most massive halo
-						          else if(descendant_check_transient_subhalo->main_progenitor){
- 							          // remove main progenitor flag
-								  descendant_check_transient_subhalo->main_progenitor = false; 
-								  descendant_check_transient_subhalo->remove_mp_flag = true;
-								  // count it as removing the mp flag
- 								  count_transient_mp++;
-							  }
-							  
-						  }
-					  }
-
-					  // if transient is not linked, then apply normal subhalo-descendant subhalo connection
-					  if(!transient_linked){
-					          link(subhalo, descendant_subhalo, halo, descendant_halo);
-					  }
+				          massive_transient_fix(subhalo, descendant_subhalo, halo, descendant_halo, exec_params,
+								count_transient_central, count_transient_sat, count_transient_mp);
 				  }
 
 				  // no fixes for massive transients, so normal subhalo-descendant subhalo connection is carried out
@@ -931,6 +848,102 @@ void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos, Execu
 	}
 
 }
+
+
+void TreeBuilder::massive_transient_fix(const SubhaloPtr &subhalo, const SubhaloPtr &descendant_subhalo,
+					const HaloPtr &halo, const HaloPtr &descendant_halo, ExecutionParameters exec_params,
+					int count_transient_central, int count_transient_sat, int count_transient_mp){
+
+        // This function gathers the fix for the massive transients 
+        // in case the descendant halo for our subhalo hosts any transient, we check whether this subhalo decreases in mass
+        // and in case there is a mass decrease, we evaluate if there is a more accurate connection involving the transient
+
+        // flag to indicate if the transient has been linked
+        // otherwise a normal link is carried out
+        bool transient_linked = false;
+					  
+	// loop over all the descendant subhalos until finding the transient
+	for(const auto &descendant_check_transient_subhalo: descendant_halo->all_subhalos()){
+	        if(descendant_check_transient_subhalo->transient){
+						    
+		        // several conditions are imposed before breaking the subhalo-descendant subhalo connection
+		        // and creating the subhalo-transient connection:
+		        // 1. transient is more massive than current descendant
+		        // 2. subhalo-descendant subhalo connection (which will be broken) has
+		        // a decrease in mass greater than a threshold, controlled by "transient_lostmass_ratio" 
+		        // 3. subhalo-transient connenction has a reasonable change in mass
+		        // between a lower and an upper limit, controlled by "transient_gainedmass_ratio_low" and "transient_gainedmass_ratio_up"
+		        if(descendant_check_transient_subhalo->Mvir > descendant_subhalo->Mvir &&
+			   (descendant_subhalo->Mvir/subhalo->Mvir) < exec_params.transient_lostmass_ratio &&
+			   (descendant_check_transient_subhalo->Mvir/subhalo->Mvir) < exec_params.transient_gainedmass_ratio_up &&
+			   (descendant_check_transient_subhalo->Mvir/subhalo->Mvir) > exec_params.transient_gainedmass_ratio_low){
+							    
+//			        // looking at longer branches: compute how many snapshots forward in time the subhalos live
+//			        int snap_sh = 0;
+//				int snap_mt = 0;
+//				auto desc_sh = descendant_subhalo;
+//				while(desc_sh->descendant && desc_sh->main_progenitor){
+//				        snap_sh++;
+//					desc_sh = desc_sh->descendant;
+//				}
+//				auto desc_mt = descendant_check_transient_subhalo;
+//				while(desc_mt->descendant && desc_mt->main_progenitor){
+//				        snap_mt++;
+//					desc_mt = desc_mt->descendant;
+//				}
+//				
+//			        // if the transient length is longer then we should break the link
+//				if(snap_mt > snap_sh){
+
+			        // subhalo-transient connection
+				link(subhalo, descendant_check_transient_subhalo, halo, descendant_halo);
+				subhalo->descendant_id = descendant_check_transient_subhalo->id;
+				// not dealing with this particular transient anymore
+				descendant_check_transient_subhalo->transient = false;
+				// flag that the transient has been linked
+				transient_linked = true;
+								  
+				if(descendant_check_transient_subhalo->id == descendant_halo->id){
+				        // transient link counted as central for statistics
+				        count_transient_central++;
+				}
+				else{
+				        // transient link counted as satellite for statistics
+				        count_transient_sat++;
+				}
+				
+				// if the mp flag had been removed and counted as that
+				// we remove it from that category for statistics
+				if(descendant_check_transient_subhalo->remove_mp_flag){
+				        // redefine again the flag if it was removed
+				        descendant_check_transient_subhalo->main_progenitor = true; 
+					count_transient_mp--;
+				}
+				// transient fixed, loop can be skipped 
+				break;
+//			        }
+			}
+
+			// if the transient does not fulfill the previous criteria, at least
+			// the mp flag is removed so that it does not deviate branches when
+			// it is not the most massive halo
+			else if(descendant_check_transient_subhalo->main_progenitor){
+			        // remove main progenitor flag
+			        descendant_check_transient_subhalo->main_progenitor = false; 
+				descendant_check_transient_subhalo->remove_mp_flag = true;
+				// count it as removing the mp flag
+				count_transient_mp++;
+			}
+			
+		}
+	}
+
+	// if transient is not linked, then apply normal subhalo-descendant subhalo connection
+	if(!transient_linked){
+	        link(subhalo, descendant_subhalo, halo, descendant_halo);
+	}
+}
+
 
 
 
