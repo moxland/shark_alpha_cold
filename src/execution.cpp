@@ -60,6 +60,7 @@ ExecutionParameters::ExecutionParameters(const Options &options)
         options.load("execution.transient_lostmass_ratio", transient_lostmass_ratio);
         options.load("execution.transient_gainedmass_ratio_low", transient_gainedmass_ratio_low);
         options.load("execution.transient_gainedmass_ratio_up", transient_gainedmass_ratio_up);
+        options.load("execution.define_transient", define_transient, true);
 }
 
 bool ExecutionParameters::output_snapshot(int snapshot)
@@ -72,4 +73,23 @@ int ExecutionParameters::last_output_snapshot()
 	return *output_snapshots.rbegin();
 }
 
+template <>                                                                                                                                                                                                 
+ExecutionParameters::TransientDefinition                                                                                                                                                                 
+Options::get<ExecutionParameters::TransientDefinition>(const std::string &name, const std::string &value) const {
+        auto lvalue = lower(value);
+	if (lvalue == "zdep_3sigma") {
+	        return ExecutionParameters::ZDEP_3SIGMA;
+        }
+	else if (lvalue == "const_200") {
+	        return ExecutionParameters::CONST_200;
+        }
+	if (lvalue == "const_10minpart") {
+	        return ExecutionParameters::CONST_10MINPART;
+        }
+
+        std::ostringstream os;
+        os << name << " option value invalid: " << value << ". Supported values are zdep_3sigma, const_200, const_10minpart";
+        throw invalid_option(os.str());
+}
+  
 } // namespace shark

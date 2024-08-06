@@ -283,10 +283,14 @@ public:
 	subhalo_type_t subhalo_type = CENTRAL;
 	/// Whether this subhalo has a descendant or not
 	bool has_descendant = false;
+	/// Whether this subhalo has a main progenitor or not
+	bool has_mainprogenitor = false;
 	/// Whether this subhalo is a main progenitor of its descendant.
 	bool main_progenitor = false;
 	/// Whether this subhalo is the result of an interpolation in snapshots were descendants were missing. In this case Dhalos puts a subhalo in those snapshots  to ensure continuation of the merger tree.
 	bool IsInterpolated = false;
+        /// Whether this subhalo is a main branch subhalo being born (transient candidate).
+        bool transient_candidate = false;
         /// Whether this subhalo is a massive transient.
         bool transient = false;
         /// Whether this transient subhalo has had the main progenitor flag changed.

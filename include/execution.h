@@ -95,6 +95,15 @@ public:
         float transient_gainedmass_ratio_low = 0.1;
         // Mass_TDSH/Mass_SH maximum increase value
         float transient_gainedmass_ratio_up = 3;
+
+        // how the transients are defined
+        enum TransientDefinition {
+	        ZDEP_3SIGMA = 0,
+	        CONST_200,
+		CONST_10MINPART
+	};
+
+        TransientDefinition define_transient = ZDEP_3SIGMA;
 };
 
 } // namespace shark
