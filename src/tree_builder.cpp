@@ -759,7 +759,7 @@ void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos, Simul
 					        min_particle_subhalo = particle_subhalo;
 					}
 				}
-			}`
+			}
 		}
 		// minimum particle number for structures
 		if (exec_params.define_transient == ExecutionParameters::ZDEP_3SIGMA || exec_params.define_transient == ExecutionParameters::CONST_10MINPART){
