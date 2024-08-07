@@ -77,18 +77,18 @@ template <>
 ExecutionParameters::TransientDefinition                                                                                                                                                                 
 Options::get<ExecutionParameters::TransientDefinition>(const std::string &name, const std::string &value) const {
         auto lvalue = lower(value);
-	if (lvalue == "zdep_3sigma") {
-	        return ExecutionParameters::ZDEP_3SIGMA;
+	if (lvalue == "const_10minpart") {
+	        return ExecutionParameters::CONST_10MINPART;
         }
 	else if (lvalue == "const_200") {
 	        return ExecutionParameters::CONST_200;
         }
-	if (lvalue == "const_10minpart") {
-	        return ExecutionParameters::CONST_10MINPART;
+	else if (lvalue == "zdep_3sigma") {
+	        return ExecutionParameters::ZDEP_3SIGMA;
         }
 
         std::ostringstream os;
-        os << name << " option value invalid: " << value << ". Supported values are zdep_3sigma, const_200, const_10minpart";
+        os << name << " option value invalid: " << value << ". Supported values are const_10minpart, const_200, zdep_3sigma";
         throw invalid_option(os.str());
 }
   

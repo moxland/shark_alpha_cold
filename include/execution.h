@@ -98,12 +98,12 @@ public:
 
         // how the transients are defined
         enum TransientDefinition {
-	        ZDEP_3SIGMA = 0,
+	        CONST_10MINPART = 0,
 	        CONST_200,
-		CONST_10MINPART
+	        ZDEP_3SIGMA
 	};
 
-        TransientDefinition define_transient = ZDEP_3SIGMA;
+        TransientDefinition define_transient = CONST_10MINPART;
 };
 
 } // namespace shark
