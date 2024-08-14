@@ -571,7 +571,7 @@ void TreeBuilder::define_properties_central_subhalos(const std::vector<MergerTre
 		for(int snapshot=sim_params.max_snapshot; snapshot >= sim_params.min_snapshot; snapshot--) {
 			for(auto &halo: tree->halos_at(snapshot)){
 				// First check if halo has a central subhalo, if yes, then continue with loop.
-				if (halo->central_subhalo) {
+				if (!halo->central_subhalo) {
 					continue;
 				}
 				auto main_prog = halo->central_subhalo->main();
