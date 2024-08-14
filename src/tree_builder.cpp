@@ -1178,7 +1178,7 @@ double HaloBasedTreeBuilder::percentiles(std::vector<int> data, double val){
   // cumulative sum of the weights
   partial_sum(ws.begin(),ws.end(),cumsum.begin());
 
-  for(int i = 0; i < data.size(); i++) {
+  for(std::size_t i = 0; i < data.size(); i++) {
     cumsum[i] = cumsum[i] - 1.*ws[1];
     if(data.size() != 0){
       cumsum[i] = cumsum[i]/(data.size()-1); // value in the x-axis
