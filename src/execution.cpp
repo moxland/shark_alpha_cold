@@ -60,7 +60,7 @@ ExecutionParameters::ExecutionParameters(const Options &options)
         options.load("execution.transient_lostmass_ratio", transient_lostmass_ratio);
         options.load("execution.transient_gainedmass_ratio_low", transient_gainedmass_ratio_low);
         options.load("execution.transient_gainedmass_ratio_up", transient_gainedmass_ratio_up);
-        options.load("execution.define_transient", define_transient, true);
+        options.load("execution.define_transient", define_transient);
 }
 
 bool ExecutionParameters::output_snapshot(int snapshot)
