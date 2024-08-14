@@ -73,8 +73,8 @@ int ExecutionParameters::last_output_snapshot()
 	return *output_snapshots.rbegin();
 }
 
-template <>                                                                                                                                                                                                 
-ExecutionParameters::TransientDefinition                                                                                                                                                                 
+template <>
+ExecutionParameters::TransientDefinition
 Options::get<ExecutionParameters::TransientDefinition>(const std::string &name, const std::string &value) const {
         auto lvalue = lower(value);
 	if (lvalue == "zdep_3sigma") {
