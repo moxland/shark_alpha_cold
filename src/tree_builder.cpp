@@ -749,7 +749,7 @@ void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos, Simul
 		std::set<int> halo_snapshots;
 		for(const auto &halo: halos) {
 			halo_snapshots.insert(halo->snapshot);
-		        // compute the minimum particle number for structures
+		        // compute the minimum particle number for structures when the transient fixes are applied
 			if ((exec_params.apply_fix_to_massive_transient_events) && (exec_params.define_transient == ExecutionParameters::ZDEP_3SIGMA || exec_params.define_transient == ExecutionParameters::CONST_10MINPART)){
 			        for(const auto &subhalo: halo->all_subhalos()) {
 				        // compute the particle number for each subhalo
@@ -761,7 +761,7 @@ void HaloBasedTreeBuilder::loop_through_halos(std::vector<HaloPtr> &halos, Simul
 				}
 			}
 		}
-		// minimum particle number for structures
+		// minimum particle number for structures when the transient fixes are applied
 		if ((exec_params.apply_fix_to_massive_transient_events) && (exec_params.define_transient == ExecutionParameters::ZDEP_3SIGMA || exec_params.define_transient == ExecutionParameters::CONST_10MINPART)){
 		        LOG(info) << "Minimum particle subhalo: " << min_particle_subhalo;
 		}
