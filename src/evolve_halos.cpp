@@ -117,7 +117,7 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 			// Make sure all SFRs and BH accretion rates (in mass and metals) are set to 0 for the next snapshot
 			for (auto &galaxy: subhalo->galaxies) {
 				//restart descendant_id
-				galaxy.descendant_id = -1;
+				//galaxy.descendant_id = -1;
 			}
 
 			// Check if this is a satellite subhalo, and whether this is the last snapshot in which it is identified.
