@@ -114,12 +114,6 @@ void transfer_galaxies_to_next_snapshot(const std::vector<HaloPtr> &halos, int s
 	for(auto &halo: halos){
 		for(auto &subhalo: halo->all_subhalos()) {
 
-			// Make sure all SFRs and BH accretion rates (in mass and metals) are set to 0 for the next snapshot
-			for (auto &galaxy: subhalo->galaxies) {
-				//restart descendant_id
-				galaxy.descendant_id = -1;
-			}
-
 			// Check if this is a satellite subhalo, and whether this is the last snapshot in which it is identified.
 			// In that case, the transfer of galaxies has already been done in merging_subhalos.
 			// In any other case, we need to do the transfer.
@@ -207,6 +201,8 @@ void reset_instantaneous_galaxy_properties(const std::vector<HaloPtr> &halos, in
 				galaxy.sfr_disk			= 0;
 				galaxy.smbh.macc_sb		= 0;
 				galaxy.smbh.macc_hh		= 0;
+				//restart descendant_id
+				galaxy.descendant_id            = -1;
 
 				//restart counter of mergers and disk instabilities.
 				galaxy.interaction.restore_interaction_item();

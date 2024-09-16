@@ -150,7 +150,7 @@ void GalaxyMergers::merging_timescale(Galaxy &galaxy, SubhaloPtr &primary, Subha
 
 		// The satellites mass including its baryon mass
 		double mgal = galaxy.baryon_mass();
-		double ms = simparams.particle_mass * secondary->Npart + mgal;
+		double ms = secondary->Mvir + mgal;
 		if(transfer_types2){
 			ms = galaxy.msubhalo_type2 + mgal;
 		}
