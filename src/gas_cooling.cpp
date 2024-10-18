@@ -584,13 +584,11 @@ double GasCooling::cooling_rate(Subhalo &subhalo, Galaxy &galaxy, double z, doub
 		double r_ratio = rheat/r_cool;
 
 		// Track heating radius. Croton16 assume that the heating radius only increases, so it is saved only if it's larger than the previously recorded one.
-		if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16){
-			subhalo.cooling_subhalo_tracking.rheat = rheat;
+		if(agnfeedback->parameters.model == AGNFeedbackParameters::CROTON16 || agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS23){
+			if(subhalo.cooling_subhalo_tracking.rheat < rheat){
+                		subhalo.cooling_subhalo_tracking.rheat = rheat;
+			}
 		}
-		else if(subhalo.cooling_subhalo_tracking.rheat < rheat && agnfeedback->parameters.model == AGNFeedbackParameters::LAGOS23){
-			subhalo.cooling_subhalo_tracking.rheat = rheat;
-		}
-
 		r_ratio = subhalo.cooling_subhalo_tracking.rheat/r_cool;
 
 		if(r_ratio > agnfeedback->parameters.alpha_cool){

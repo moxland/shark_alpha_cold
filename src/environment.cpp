@@ -292,7 +292,7 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 			// then strip a fraction of the satellite mass.
 			for (auto &satellite: central_subhalo->type2_galaxies() ){
 				// If no stripping has occurred in this type II then assume 99% loss of DM.
-				// is stars_tidal_stripped.mass>0 is because stripping should have occurred already.
+				// If stars_tidal_stripped.mass>0 is because stripping should have occurred already.
 				if(satellite.stars_tidal_stripped.mass == 0){
 					// compute how much has been lost since galaxy infall
 				        lost_stellar.mass = (1 - ratio_sm) * satellite.stellar_mass();
