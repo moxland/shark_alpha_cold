@@ -51,6 +51,7 @@ EnvironmentParameters::EnvironmentParameters(const Options &options)
 	options.load("environment.minimum_halo_mass_fraction", minimum_halo_mass_fraction);
 	options.load("environment.alpha_rps_halo", alpha_rps_halo);
 	options.load("environment.alpha_cold", alpha_cold);
+	options.load("environment.Accuracy_RPS", Accuracy_RPS);
 
 }
 
