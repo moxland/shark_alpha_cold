@@ -51,7 +51,7 @@ EnvironmentParameters::EnvironmentParameters(const Options &options)
 	options.load("environment.minimum_halo_mass_fraction", minimum_halo_mass_fraction);
 	options.load("environment.alpha_rps_halo", alpha_rps_halo);
 	options.load("environment.alpha_cold", alpha_cold);
-	options.load("environment.Accuracy_RPS", Accuracy_RPS);
+	options.load("environment.accuracy_rps", accuracy_rps);
 
 }
 
@@ -453,7 +453,7 @@ double Environment::process_ram_pressure_stripping_gas(const SubhaloPtr &primary
 	EnvironmentProcessAndProps env_and_props = {this, &props};
 	double result = 0;
 	try{
-		result = root_solver.root_solver_function(f, &env_and_props, env_and_props.props->x_low, env_and_props.props->secondary.rvir_infall, 0, parameters.Accuracy_RPS);
+		result = root_solver.root_solver_function(f, &env_and_props, env_and_props.props->x_low, env_and_props.props->secondary.rvir_infall, 0, parameters.accuracy_rps);
 	} catch (gsl_error &e) {
 		auto gsl_errno = e.get_gsl_errno();
 		std::ostringstream os;
