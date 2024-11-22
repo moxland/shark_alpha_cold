@@ -495,7 +495,7 @@ double Environment::ram_pressure_stripping_hot_gas(const SubhaloPtr &primary,
 
 	auto enc_mass = darkmatterhalos->enclosed_total_mass(secondary, z, r);
 	double func = parameters.alpha_rps_halo * shark::constants::G * enc_mass *
-			(secondary.hot_halo_gas.mass + secondary.hot_halo_gas_stripped.mass) / (8 * rvir * std::pow(r,3)) / 1e24 -
+			(secondary.hot_halo_gas.mass + secondary.hot_halo_gas_stripped.mass) / (8 * rvir * std::pow(r,3)) / 1e18 -
 			ram_press;
 
 	return func;
@@ -516,7 +516,7 @@ double Environment::ram_pressure_stripping_galaxy_gas(const GalaxyPtr &galaxy,
 
 	auto sigma_gas = galaxy->surface_density_gas(r) / 1e12; //In Msun/pc^2
 	auto sigma_gal = (galaxy->surface_density_bulge(r) + galaxy->surface_density_disk(r)) / 1e12; //In Msun/pc^2
-	double func = parameters.alpha_cold * shark::constants::PI2 *  shark::constants::G * sigma_gas * sigma_gal -
+	double func = parameters.alpha_cold * shark::constants::PI2 *  shark::constants::G * sigma_gas * sigma_gal * 1e6 -
 			ram_press;
 
 	return func;
