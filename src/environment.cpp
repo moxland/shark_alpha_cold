@@ -495,7 +495,7 @@ double Environment::ram_pressure_stripping_hot_gas(const SubhaloPtr &primary,
 
 	auto enc_mass = darkmatterhalos->enclosed_total_mass(secondary, z, r);
 	double func = parameters.alpha_rps_halo * shark::constants::G * enc_mass *
-			(secondary.hot_halo_gas.mass + secondary.hot_halo_gas_stripped.mass) / (8 * rvir * std::pow(r,3)) / 1e18 -
+			(secondary.hot_halo_gas.mass + secondary.hot_halo_gas_stripped.mass) / (8 * rvir * std::pow(r,3)) / 1e24 -
 			ram_press;
 
 	return func;
