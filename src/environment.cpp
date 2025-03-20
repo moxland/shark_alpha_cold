@@ -114,7 +114,7 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 				auto func_rvirdiv100 = ram_pressure_stripping_hot_gas(central_subhalo, satellite_subhalo, satellite_subhalo.rvir_infall/100, z, ram_press);
 
 				if(func_rvir > 0){
-					r_rps = 1000 //satellite_subhalo.hot_halo_gas_r_rps;
+					r_rps = 1000; //satellite_subhalo.hot_halo_gas_r_rps;
 				}
 				else if (func_rvir < 0 && func_rvirdiv100 > 0){
 					r_rps = process_ram_pressure_stripping_gas(central_subhalo, satellite_subhalo, z, ram_press, true, false);
