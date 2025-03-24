@@ -111,7 +111,7 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 				//first check whether the function is positive at Rvir_infall. In that case, the satellite subhalo experiences no stripping:
 				//second, check whether function is negative at Rvir_infall/100. In that case assume all hot gas is stripped.
 				auto func_rvir = ram_pressure_stripping_hot_gas(central_subhalo, satellite_subhalo, satellite_subhalo.rvir_infall, z, ram_press);
-				auto func_rvirdiv100 = ram_pressure_stripping_hot_gas(central_subhalo, satellite_subhalo, satellite_subhalo.rvir_infall/1000, z, ram_press);
+				auto func_rvirdiv100 = ram_pressure_stripping_hot_gas(central_subhalo, satellite_subhalo, satellite_subhalo.rvir_infall/50, z, ram_press);
 
 				if(func_rvir > 0){
 					r_rps = satellite_subhalo.hot_halo_gas_r_rps;
@@ -157,7 +157,7 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 				else if(r_rps == 0){
 					// track stripping of gas
 					satellite_subhalo.hot_halo_gas_stripped += (satellite_subhalo.hot_halo_gas + satellite_subhalo.cold_halo_gas);
-					satellite_subhalo.hot_halo_gas_r_rps = satellite_subhalo.rvir_infall/1000;
+					satellite_subhalo.hot_halo_gas_r_rps = satellite_subhalo.rvir_infall/50;
 
 					//now transfer gas mass
 					satellite_subhalo.transfer_halo_gas_to(central_subhalo);
@@ -407,7 +407,7 @@ double Environment::process_ram_pressure_stripping_gas(const SubhaloPtr &primary
 	double x_low = 0;
 
 	if(halo_strip){
-		x_low = secondary.rvir_infall/1000.0;
+		x_low = secondary.rvir_infall/50;
 	}
 	else if(ism_strip){
 		x_low = secondary.rvir_infall/500.0;
