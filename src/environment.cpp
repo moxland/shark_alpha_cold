@@ -120,7 +120,7 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 					r_rps = process_ram_pressure_stripping_gas(central_subhalo, satellite_subhalo, z, ram_press, true, false);
 				}
 				else if (func_rvir < 0 && func_rvirdiv100 < 0){
-					r_rps = 0;
+					r_rps = 1e5;
 				}
 
 				// If the ram-pressure stripping radius has decreased from previous timesteps, then compute how much new gas is lost.
