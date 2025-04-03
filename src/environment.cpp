@@ -90,9 +90,9 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 	auto satellite_galaxy = satellite_subhalo.type1_galaxy();
 
 	// Assume halo gas of subhalos that will disappear in the next snapshot is fully stripped.
-	if(parameters.stripping && satellite_subhalo.infall_t == z){
-		satellite_subhalo.transfer_halo_gas_to(central_subhalo);
-	}
+	//if(parameters.stripping && satellite_subhalo.infall_t == z){
+	//	satellite_subhalo.transfer_halo_gas_to(central_subhalo);
+	//}
 
 	if(parameters.stripping && satellite_subhalo.infall_t != z){
 		// If I'm computing gradual ram pressure stripping of any form, then compute the ram pressure the satellite feels.
