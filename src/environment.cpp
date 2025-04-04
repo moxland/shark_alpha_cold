@@ -85,7 +85,7 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 	satellite_subhalo.mean_galaxy_making_stellar_halo = 0;
 
 	double ram_press = 0;
-	double r_rps = 1e5;
+	double r_rps = 0;
 
 	auto satellite_galaxy = satellite_subhalo.type1_galaxy();
 
@@ -516,7 +516,8 @@ double Environment::ram_pressure_stripping_galaxy_gas(const GalaxyPtr &galaxy,
 
 	auto sigma_gas = galaxy->surface_density_gas(r) / 1e12; //In Msun/pc^2
 	auto sigma_gal = (galaxy->surface_density_bulge(r) + galaxy->surface_density_disk(r)) / 1e12; //In Msun/pc^2
-	double func = parameters.alpha_cold * shark::constants::PI2 *  shark::constants::G * sigma_gas * sigma_gal * 1e6 -
+	auto sigma_stars = galaxy->surface_density_stars(r) / 1e12; //In Msun/pc^2
+	double func = parameters.alpha_cold * shark::constants::PI2 *  shark::constants::G * sigma_gas * sigma_stars * 1e6 -
 			ram_press;
 
 	return func;
