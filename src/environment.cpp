@@ -85,7 +85,7 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 	satellite_subhalo.mean_galaxy_making_stellar_halo = 0;
 
 	double ram_press = 0;
-	double r_rps = 0;
+	double r_rps = 1e5;
 
 	auto satellite_galaxy = satellite_subhalo.type1_galaxy();
 
