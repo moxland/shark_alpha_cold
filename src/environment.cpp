@@ -435,13 +435,13 @@ double Environment::process_ram_pressure_stripping_gas(const SubhaloPtr &primary
 						env_and_props->props->secondary,
 						r,
 						env_and_props->props->z,
-						env_and_props->props->ram_press);
+						env_and_props->props->ram_pressure);
 		}
 		else if(env_and_props->props->ism_strip){
 			return env_and_props->environment->ram_pressure_stripping_galaxy_gas(env_and_props->props->secondary.type1_galaxy(),
 						r,
 						env_and_props->props->z,
-						env_and_props->props->ram_press);
+						env_and_props->props->ram_pressure);
 		}
 		else{
 			std::ostringstream os;
