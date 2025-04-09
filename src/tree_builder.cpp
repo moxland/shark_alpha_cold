@@ -618,7 +618,6 @@ void TreeBuilder::define_properties_satellite_subhalos(const std::vector<MergerT
 
 							subhalo->lambda = darkmatterhalos->halo_lambda(*subhalo, mvir, z, npart);
 							subhalo->Vvir = darkmatterhalos->halo_virial_velocity(mvir, z);
-							subhalo->rvir_infall = darkmatterhalos->halo_virial_radius(mvir, z);
 
 
 						}
