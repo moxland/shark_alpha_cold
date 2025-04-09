@@ -519,7 +519,7 @@ void TreeBuilder::define_ages_halos(const std::vector<MergerTreePtr> &trees,
  								subhalo->L_infall.z = main_prog->host_halo->central_subhalo->L.z;
 
 								//assume the stripping radius is equal to the virial radius at infall (which the largest it can be).
-								subhalo->hot_halo_gas_r_rps = subhalo->rvir_infall;
+								subhalo->hot_halo_gas_r_rps = 0.500 //subhalo->rvir_infall;
 							}
 							snap --;
 							main_prog = main_prog->main();
