@@ -124,7 +124,7 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 				}
 
 				// If the ram-pressure stripping radius has decreased from previous timesteps, then compute how much new gas is lost.
-				if(r_rps < satellite_subhalo.hot_halo_gas_r_rps && r_rps > 0){
+				if(r_rps <= satellite_subhalo.hot_halo_gas_r_rps && r_rps > 0){
 					// 1. compute hot gas outside r_rps
 					// 2. update satellite subhalo r_rps
 					// 3. update hot gas that has been stripped.
@@ -154,9 +154,9 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 					central_subhalo->hot_halo_gas.mass_metals += metals_removed_cold + metals_removed_hot;
 
 				}
-				else if(r_rps >= satellite_subhalo.hot_halo_gas_r_rps && r_rps > 0){
-					satellite_subhalo.hot_halo_gas_r_rps = r_rps;
-				}
+				//else if(r_rps >= satellite_subhalo.hot_halo_gas_r_rps && r_rps > 0){
+				//	satellite_subhalo.hot_halo_gas_r_rps = r_rps;
+				//}
 				else if(r_rps == 0){
 					// track stripping of gas
 					satellite_subhalo.hot_halo_gas_stripped += (satellite_subhalo.hot_halo_gas + satellite_subhalo.cold_halo_gas);
