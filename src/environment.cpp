@@ -155,7 +155,7 @@ void Environment::process_satellite_subhalo_environment(Subhalo &satellite_subha
 
 				}
 				else if(r_rps >= satellite_subhalo.hot_halo_gas_r_rps && r_rps > 0){
-					satellite_subhalo.hot_halo_gas_r_rps = satellite_subhalo.hot_halo_gas_r_rps;
+					satellite_subhalo.hot_halo_gas_r_rps = r_rps;
 				}
 				else if(r_rps == 0){
 					// track stripping of gas
