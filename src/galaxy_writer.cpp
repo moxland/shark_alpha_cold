@@ -279,10 +279,13 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	vector<float> mvir_hosthalo;
 	vector<float> mvir_subhalo;
+	vector<float> rvir_hosthalo;
+	vector<float> rvir_subhalo;
 	vector<float> vmax_subhalo;
 	vector<float> vvir_hosthalo;
 	vector<float> vvir_subhalo;
 	vector<float> mvir_infall_subhalo;
+	vector<float> rvir_infall_subhalo;
 
 	vector<float> cnfw_subhalo;
 	vector<float> lambda_subhalo;
@@ -330,9 +333,11 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 		// assign properties of host halo
 		auto mhalo = halo->Mvir;
+		auto rhalo = halo->Rvir;
 		auto vhalo = halo->Vvir;
 
 		halo_m.push_back(mhalo);
+		halo_r.push_back(rhalo);
 		halo_v.push_back(vhalo);
 		halo_lambda.push_back(halo->lambda);
 		halo_concentration.push_back(halo->concentration);
@@ -347,6 +352,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 			// assign properties of host subhalo (note that if these subhalos have descendants, then we assign those properties)
 			auto msubhalo = subhalo->Mvir;
+			auto rsubhalo = subhalo->Rvir;
 			auto cnfw     = subhalo->concentration;
 			auto lambda   = subhalo->lambda;
 			auto vvir_sh  = subhalo->Vvir;
@@ -358,6 +364,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 			auto lost_subhalo = subhalo->lost_galaxy_gas;
 			auto stellarhalo = subhalo->stellar_halo;
 			auto msub_infall = subhalo->Mvir_infall;
+			auto rsub_infall = subhalo->rvir_infall;
 			auto mmeanstellarhalo = subhalo->mean_galaxy_making_stellar_halo;
 			auto stripped_subhalo = subhalo->hot_halo_gas_stripped;
 			auto r_rps_halo = subhalo->hot_halo_gas_r_rps;
@@ -529,18 +536,22 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 				mean_stellar_mass_galaxies_ihsc.push_back(ms_mean_stellarhalo);
 
 				mvir_hosthalo.push_back(mhalo);
+				rvir_hosthalo.push_back(rhalo);
 				vvir_hosthalo.push_back(vhalo);
 
-				double mvir_gal = 0 ;
+				double mvir_gal = 0;
+				double rvir_gal = 0;
 				double c_sub = 0;
 				double l_sub = 0;
 				double m_infall = 0;
+				double r_infall = 0;
 				xyz<float> pos;
 				xyz<float> vel;
 				xyz<float> L;
 
 				if(galaxy.galaxy_type == Galaxy::CENTRAL || galaxy.galaxy_type == Galaxy::TYPE1){
 					mvir_gal = msubhalo;
+					rvir_gal = rsubhalo;
 					c_sub    = cnfw;
 					l_sub    = lambda;
 					pos      = subhalo->position;
@@ -548,6 +559,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					L        = subhalo->L.unit() * galaxy.angular_momentum();
 					vvir_subhalo.push_back(vvir_sh);
 					mvir_subhalo.push_back(mvir_gal);
+					rvir_subhalo.push_back(rvir_gal);
 					cnfw_subhalo.push_back(c_sub);
 					lambda_subhalo.push_back(l_sub);
 					redshift_of_merger.push_back(-1);
@@ -556,6 +568,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 					}
 					if(galaxy.galaxy_type == Galaxy::TYPE1){
 						m_infall = msub_infall;
+						r_infall = rsub_infall;
 					}
 				}
 				else{
@@ -577,6 +590,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 				}
 				mvir_infall_subhalo.push_back(m_infall);
+				rvir_infall_subhalo.push_back(r_infall);
 
 				//force the descendant Id to be = -1 if this is the last snapshot. If not, check that all descendant_ids are positive.
 				if(snapshot == sim_params.max_snapshot){
@@ -972,6 +986,12 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	comment = "Dark matter mass of the subhalo in which this galaxy resides [Msun/h]. In the case of type 2 satellites, this corresponds to the mass its subhalo had before disappearing from the subhalo catalogs.";
 	file.write_dataset("galaxies/mvir_subhalo", mvir_subhalo, comment);
 
+	comment = "Virial radius of the host halo in which this galaxy resides [cMpc/h]";
+	file.write_dataset("galaxies/rvir_hosthalo", rvir_hosthalo, comment);
+
+	comment = "Virial radius of the subhalo in which this galaxy resides [cMpc/h]";
+	file.write_dataset("galaxies/rvir_subhalo", rvir_subhalo, comment);
+
 	comment = "Maximum circular velocity of this galaxy [km/s]";
 	file.write_dataset("galaxies/vmax_subhalo", vmax_subhalo, comment);
 
@@ -992,6 +1012,9 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 
 	comment = "Dark matter mass at infall of the host halo in which this galaxy reside when it was last central [Msun/h]";
 	file.write_dataset("galaxies/mvir_infall_subhalo", mvir_infall_subhalo, comment);
+
+	comment = "Virial radius at infall of the host halo in which this galaxy reside when it was last central [cMpc/h]";
+	file.write_dataset("galaxies/rvir_infall_subhalo", rvir_infall_subhalo, comment);
 
 	//Galaxy position
 	comment = "position component x of galaxy [cMpc/h]. In the case of type 2 galaxies, the positions are generated to randomly sample an NFW halo with the concentration of the halo the galaxy lives in.";
