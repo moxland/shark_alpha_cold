@@ -136,6 +136,8 @@ public:
 	float Vvir = 0;
 	/// dark matter mass of the halo [Msun/h]
 	float Mvir = 0;
+	/// Virial radius of the subhalo [Mpc/h]
+	float Rvir = 0;
 	/// gas mass in the halo [Msun/h]. This is different than 0 if the input simulation is a hydrodynamical simulation
 	float Mgas = 0;
 	/// NFW concentration parameter of halo
