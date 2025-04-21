@@ -291,6 +291,7 @@ void HDF5GalaxyWriter::write_galaxies(hdf5::Writer &file, int snapshot, const st
 	vector<float> lambda_subhalo;
 
 	vector<float> halo_m;
+	vector<float> halo_r;
 	vector<float> halo_v;
 	vector<float> halo_lambda;
 	vector<float> halo_concentration;
