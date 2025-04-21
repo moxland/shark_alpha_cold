@@ -220,6 +220,8 @@ public:
 	float Vvir = 0;
 	/// dark matter mass of the subhalo [Msun/h]
 	float Mvir = 0;
+	/// Virial radius of the subhalo [Mpc/h]
+	float Rvir = 0;
 	/// gas mass in the subhalo [Msun/h]. This is different than 0 if the input simulation is a hydrodynamical simulation.
 	float Mgas = 0;
 	/// number of dark matter particles in the halo
